@@ -20,11 +20,17 @@ function toDateStr(val) {
   return null;
 }
 
+// Busca a aba ignorando espaços extras e maiúsculas/minúsculas
 function parseSheet(wb, sheetSearch) {
-  const names = wb.SheetNames.map(s => s.trim().toUpperCase());
-  const idx = names.findIndex(n => n.includes(sheetSearch.toUpperCase()));
-  if (idx === -1) return null;
-  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[idx]], { header: 1, defval: null });
+  const search = sheetSearch.trim().toUpperCase();
+  const match = wb.SheetNames.find(s => s.trim().toUpperCase() === search);
+  if (!match) {
+    // fallback: includes
+    const fallback = wb.SheetNames.find(s => s.trim().toUpperCase().includes(search));
+    if (!fallback) return null;
+    return XLSX.utils.sheet_to_json(wb.Sheets[fallback], { header: 1, defval: null });
+  }
+  return XLSX.utils.sheet_to_json(wb.Sheets[match], { header: 1, defval: null });
 }
 
 function parseSala(rows) {
@@ -113,9 +119,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) {
-    return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN não configurado nas variáveis de ambiente da Vercel.' });
-  }
+  if (!token) return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN não configurado.' });
 
   const form = new IncomingForm({ keepExtensions: true, maxFileSize: 10 * 1024 * 1024 });
 
@@ -132,16 +136,19 @@ export default async function handler(req, res) {
       const buffer = fs.readFileSync(file.filepath);
       const wb = XLSX.read(buffer, { type: 'buffer', cellDates: false });
 
-      const data = {};
+      // Log dos nomes das abas para debug
+      console.log('Abas encontradas:', wb.SheetNames);
 
-      const salaKeys = ['ADOLESCENTES','JOVENS','IRMÃOS','IRMÃS','PROFESSORES'];
-      for (const key of salaKeys) {
+      const data = {};
+      for (const key of ['ADOLESCENTES','JOVENS','IRMÃOS','IRMÃS','PROFESSORES']) {
         const rows = parseSheet(wb, key);
+        console.log(`Aba ${key}:`, rows ? `${rows.length} linhas` : 'NÃO ENCONTRADA');
         const parsed = parseSala(rows);
         if (parsed) data[key] = parsed;
       }
 
       const rankRows = parseSheet(wb, 'RANKING');
+      console.log('Aba RANKING:', rankRows ? `${rankRows.length} linhas` : 'NÃO ENCONTRADA');
       const { ranking, relatorio } = parseRanking(rankRows);
       data.ranking = ranking;
       data.relatorio = relatorio;
@@ -149,15 +156,15 @@ export default async function handler(req, res) {
 
       const json = JSON.stringify(data);
 
-      // Passa o token explicitamente para evitar problema de env var não carregada
       await put('ebd-data.json', json, {
         access: 'public',
         contentType: 'application/json',
         addRandomSuffix: false,
         token,
+        allowOverwrite: true,
       });
 
-      return res.status(200).json({ ok: true, message: 'Planilha processada com sucesso!' });
+      return res.status(200).json({ ok: true, abas: Object.keys(data) });
     } catch (e) {
       console.error(e);
       return res.status(500).json({ error: 'Erro ao processar planilha: ' + e.message });
