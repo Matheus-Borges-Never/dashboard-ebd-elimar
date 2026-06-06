@@ -44,35 +44,33 @@ function computeFromDB(db) {
     const alunos = (db.alunos || []).filter(a => a.sala_id === sala.id);
     const alunoIds = new Set(alunos.map(a => a.id));
 
-    // Domingos com chamada registrada: até o último domingo que tem qualquer registro
-    const recordedDates = presencas
-      .filter(p => alunoIds.has(p.aluno_id) && sundays.includes(p.data))
-      .map(p => p.data);
-    const lastRecorded = recordedDates.length > 0
-      ? recordedDates.reduce((a, b) => (a > b ? a : b))
-      : null;
-    // Usa apenas domingos até o último com dado — domingos futuros ou não registrados ficam fora
-    const activeSundays = lastRecorded ? sundays.filter(s => s <= lastRecorded) : [];
+    // Aulas realizadas = domingos passados que têm ao menos 1 registro de presença
+    // Usado APENAS no denominador da freq% — a exibição mostra todos os domingos passados
+    const recordedDates = new Set(
+      presencas.filter(p => alunoIds.has(p.aluno_id) && sundays.includes(p.data)).map(p => p.data)
+    );
+    const aulasRealizadas = sundays.filter(d => recordedDates.has(d)).length;
 
+    // Todos os domingos passados aparecem no relatório (0 para os sem chamada feita)
     const alunosData = alunos.map(aluno => {
-      const pArr = activeSundays.map(d => {
+      const pArr = sundays.map(d => {
         const p = presencas.find(x => x.aluno_id === aluno.id && x.data === d);
         return p && p.presente ? 1 : 0;
       });
       return { nome: aluno.nome, pts: pArr.reduce((a, b) => a + b, 0), presencas: pArr };
     });
 
-    const totais_por_aula = activeSundays.map((_, i) =>
+    const totais_por_aula = sundays.map((_, i) =>
       alunosData.reduce((sum, a) => sum + a.presencas[i], 0)
     );
 
-    // freq % = presenças efetivas / (alunos × aulas realizadas)
+    // freq % = presenças efetivas / (alunos × aulas com chamada realizada)
     const total = alunosData.reduce((s, a) => s + a.pts, 0);
-    const max = alunos.length * activeSundays.length;
+    const max = alunos.length * aulasRealizadas;
     const freq_pct = max > 0 ? Math.round((total / max) * 10000) / 100 : 0;
 
     result[sala.nome] = {
-      datas: activeSundays.map(fmtDate),
+      datas: sundays.map(fmtDate),
       alunos: alunosData,
       totais_por_aula,
       freq_pct,
