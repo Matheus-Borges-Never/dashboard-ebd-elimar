@@ -10,6 +10,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 20px; }
 body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #E8DFC8; min-height: 100vh; }
+#app { text-transform: uppercase; }
 
 /* LOADING */
 #loading-screen {
@@ -105,7 +106,7 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
 .evol-table td:first-child { text-align: left; font-family: 'Cinzel', serif; font-size: 0.78rem; letter-spacing: 0.08em; color: #C9A84C; }
 .evol-table .total-row td { border-top: 1px solid #C9A84C33; border-bottom: none; color: #E8DFC8; font-weight: 500; }
 .evol-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: middle; }
-.cell-hi { color: #C9A84C; font-weight: 500; }
+.evol-table td.cell-hi { color: #C9A84C; font-weight: 600; }
 
 .ebd-dest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 2rem; }
 .ebd-dest-card { background: #111F30; border: 1px solid #C9A84C44; border-radius: 12px; padding: 1.2rem 1.3rem; position: relative; }
@@ -591,8 +592,9 @@ async function loadData() {
 
     if (data['PROFESSORES']) {
       const p = data['PROFESSORES'];
-      const profRows = p.alunos.map(a => {
-        const pct = p.alunos[0].pts > 0 ? Math.round((a.pts / p.alunos[0].pts) * 100) : 0;
+      const profSorted = [...p.alunos].sort((a, b) => b.pts - a.pts);
+      const profRows = profSorted.map(a => {
+        const pct = profSorted[0].pts > 0 ? Math.round((a.pts / profSorted[0].pts) * 100) : 0;
         const perfect = a.pts === p.datas.length;
         return `<div class="ebd-aluno-row"><span class="ebd-aluno-name">${ucWords(a.nome)}</span><span class="ebd-aluno-pts${perfect?' perfect':''}">${a.pts} pt${a.pts!==1?'s':''}</span></div>`;
       }).join('');
