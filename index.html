@@ -467,14 +467,15 @@ async function loadData() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    // Compute aulas realizadas from first sala found
+    // Aulas: valores vindos do meta (dinâmico, baseado nas datas do trimestre)
+    const totalAulas = data.meta?.totalDomingos || TOTAL_AULAS;
+    const aulasRealizadas = data.meta?.domingosPassed || 0;
     const firstSala = ['ADOLESCENTES','JOVENS','IRMÃOS','IRMÃS'].find(s => data[s]);
     const salaData = firstSala ? data[firstSala] : null;
-    const aulasRealizadas = salaData ? salaData.totais_por_aula.filter(v => v > 0).length : 0;
     const datas = salaData ? salaData.datas : [];
     const primeiraDt = datas[0] || '—';
     const ultimaDt = datas[datas.length - 1] || '—';
-    const pctProgresso = Math.round((aulasRealizadas / TOTAL_AULAS) * 100);
+    const pctProgresso = Math.round((aulasRealizadas / totalAulas) * 100);
 
     // Freq geral (media das salas sem prof)
     const salasParaMedia = ['ADOLESCENTES','JOVENS','IRMÃOS','IRMÃS'].filter(s => data[s] && data[s].freq_pct);
@@ -497,11 +498,11 @@ async function loadData() {
     document.getElementById('card-ultimo').textContent = ultimoTotal || '—';
     document.getElementById('card-ultimo-sub').textContent = `presentes em ${ultimaDt}`;
     document.getElementById('card-docente').textContent = profFreq ? profFreq.toFixed(0) + '%' : '—';
-    document.getElementById('aulasBadge').textContent = `${aulasRealizadas} AULAS REALIZADAS · ${TOTAL_AULAS - aulasRealizadas} RESTANTES`;
+    document.getElementById('aulasBadge').textContent = `${aulasRealizadas} AULAS REALIZADAS · ${totalAulas - aulasRealizadas} RESTANTES`;
     document.getElementById('progressFill').style.width = pctProgresso + '%';
     document.getElementById('prog-inicio').textContent = `Aula 1 · ${primeiraDt}`;
-    document.getElementById('prog-meio').textContent = `${aulasRealizadas} de ${TOTAL_AULAS} aulas (${pctProgresso}%)`;
-    document.getElementById('prog-fim').textContent = `Aula ${TOTAL_AULAS} · ${datas[TOTAL_AULAS - 1] || '28/06'}`;
+    document.getElementById('prog-meio').textContent = `${aulasRealizadas} de ${totalAulas} aulas (${pctProgresso}%)`;
+    document.getElementById('prog-fim').textContent = `Aula ${totalAulas} · ${datas[totalAulas - 1] || '—'}`;
 
     // Charts visão geral
     buildChartGeral(data);
