@@ -611,6 +611,7 @@ function renderChamada() {
             ? '<div class="empty-state">Nenhum aluno nesta sala.</div>'
             : `<div class="item-list" style="margin-bottom:1rem">${rows}</div>
                <div class="actions-row">
+                 <button class="btn" id="btnSalvarChamada" onclick="salvarChamada()">SALVAR CHAMADA</button>
                  <button class="btn btn-ghost btn-sm" onclick="marcarTodos(true)">Marcar Todos</button>
                  <button class="btn btn-ghost btn-sm" onclick="marcarTodos(false)">Desmarcar Todos</button>
                </div>`}
@@ -653,48 +654,42 @@ function _localPresenca(alunoId, data, newVal) {
   else S.db.presencas.push({ aluno_id: alunoId, data, presente: newVal });
 }
 
-// ── DEBOUNCED SAVE ────────────────────────────────────────────────────────────
-// Agrupa todas as mudanças feitas em até 1.5s e envia em uma única requisição.
-// Evita race condition onde chamadas paralelas sobrescrevem umas às outras no blob.
-let _saveTimer = null;
-const _pendingSaves = {}; // chave: "aluno_id:data" → { aluno_id, data, presente }
-
-function _queueSave(aluno_id, data, presente) {
-  _pendingSaves[`${aluno_id}:${data}`] = { aluno_id, data, presente };
-  clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(_flushSaves, 1500);
-}
-
-async function _flushSaves() {
-  const presencas = Object.values(_pendingSaves);
-  if (!presencas.length) return;
-  // Limpa a fila antes de enviar (nova mudança durante o save vai para próximo batch)
-  Object.keys(_pendingSaves).forEach(k => delete _pendingSaves[k]);
-  try {
-    await api('savePresencaLote', { presencas });
-    toast(`✓ ${presencas.length} presença${presencas.length > 1 ? 's salvas' : ' salva'}!`);
-  } catch (e) {
-    toast('Erro ao salvar: ' + e.message, 'err');
-    // Devolve para a fila em caso de erro
-    presencas.forEach(p => { _pendingSaves[`${p.aluno_id}:${p.data}`] = p; });
-  }
-}
+// ── CHAMADA SAVE ─────────────────────────────────────────────────────────────
+// Toggle apenas atualiza o estado local (sem API).
+// "Salvar Chamada" envia tudo de uma vez — elimina race conditions no blob.
 
 function toggleP(alunoId) {
   const cur = S.db.presencas.find(p => p.aluno_id === alunoId && p.data === S.chamadaData)?.presente || false;
-  const newVal = !cur;
-  _localPresenca(alunoId, S.chamadaData, newVal);
+  _localPresenca(alunoId, S.chamadaData, !cur);
   renderChamada();
-  _queueSave(alunoId, S.chamadaData, newVal);
 }
 
-async function marcarTodos(val) {
+function marcarTodos(val) {
   const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.chamadaSala);
-  alunos.forEach(a => {
-    _localPresenca(a.id, S.chamadaData, val);
-    _queueSave(a.id, S.chamadaData, val);
-  });
+  alunos.forEach(a => _localPresenca(a.id, S.chamadaData, val));
   renderChamada();
+}
+
+async function salvarChamada() {
+  const btn = document.getElementById('btnSalvarChamada');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando…'; }
+
+  const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.chamadaSala);
+  const presencas = alunos.map(a => ({
+    aluno_id: a.id,
+    data: S.chamadaData,
+    presente: S.db.presencas.find(p => p.aluno_id === a.id && p.data === S.chamadaData)?.presente || false,
+  }));
+
+  try {
+    await api('savePresencaLote', { presencas });
+    const total = presencas.filter(p => p.presente).length;
+    toast(`✓ Chamada salva! ${total} de ${alunos.length} presentes.`);
+  } catch (e) {
+    toast('Erro ao salvar: ' + e.message, 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'SALVAR CHAMADA'; }
+  }
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────

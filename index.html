@@ -556,7 +556,7 @@ async function loadData() {
 loadData();
 
 // Polling: atualiza o dashboard automaticamente a cada 30 segundos
-setInterval(loadData, 30_000);
+setInterval(loadData, 10_000);
 
 async function refreshData() {
   const btn = document.getElementById('btnRefresh');
