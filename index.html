@@ -57,18 +57,18 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
 .ebd-section.active { display: block; }
 
 .ebd-cards-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 2rem; }
-.ebd-card { background: #111F30; border: 1px solid #C9A84C33; border-radius: 12px; padding: 1.4rem 1rem; text-align: center; }
+.ebd-card { background: #111F30; border: 1px solid #C9A84C33; border-radius: 12px; padding: 1.4rem 1rem; text-align: center; position: relative; }
 .ebd-card-label { font-size: 0.72rem; color: #8A7E6A; letter-spacing: 0.14em; font-family: 'Cinzel', serif; text-transform: uppercase; margin-bottom: 0.5rem; }
 .ebd-card-value { font-size: 2.4rem; font-weight: 600; color: #C9A84C; font-family: 'Cinzel', serif; line-height: 1; }
 .ebd-card-sub { font-size: 0.78rem; color: #6A6058; margin-top: 0.3rem; font-style: italic; }
 
-.ebd-progress-wrap { background: #111F30; border: 1px solid #C9A84C33; border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2rem; }
+.ebd-progress-wrap { background: #111F30; border: 1px solid #C9A84C33; border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 2rem; position: relative; }
 .ebd-progress-label { font-size: 0.72rem; color: #8A7E6A; letter-spacing: 0.14em; font-family: 'Cinzel', serif; margin-bottom: 0.6rem; }
 .ebd-progress-bar { background: #1A2E44; border-radius: 5px; height: 13px; overflow: hidden; }
 .ebd-progress-fill { height: 100%; background: linear-gradient(90deg, #8B6914, #C9A84C, #E8C870); border-radius: 5px; transition: width 1s ease; }
 .ebd-progress-info { display: flex; justify-content: space-between; margin-top: 0.4rem; font-size: 0.78rem; color: #C9A84C; font-style: italic; }
 
-.ebd-chart-box { background: #111F30; border: 1px solid #C9A84C33; border-radius: 12px; padding: 1.3rem 1.6rem 1.6rem; margin-bottom: 2rem; }
+.ebd-chart-box { background: #111F30; border: 1px solid #C9A84C33; border-radius: 12px; padding: 1.3rem 1.6rem 1.6rem; margin-bottom: 2rem; position: relative; }
 .ebd-chart-title { font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.18em; color: #8A7E6A; margin-bottom: 1rem; text-transform: uppercase; }
 
 .ebd-podium { display: flex; align-items: flex-end; justify-content: center; gap: 20px; margin: 1rem 0 2rem; }
@@ -95,7 +95,7 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
 .pos-4 { background: #1A2E44; color: #9A8E78; border: 1px solid #C9A84C33; }
 .ebd-bar-mini { display: inline-block; height: 7px; border-radius: 3px; background: linear-gradient(90deg,#8B6914,#C9A84C); vertical-align: middle; margin-left: 10px; }
 
-.ebd-docente-wrap { background: #0D2240; border: 1px solid #C9A84C55; border-radius: 12px; padding: 1.3rem 1.6rem; margin-top: 1.2rem; }
+.ebd-docente-wrap { background: #0D2240; border: 1px solid #C9A84C55; border-radius: 12px; padding: 1.3rem 1.6rem; margin-top: 1.2rem; position: relative; }
 .ebd-docente-title { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 0.16em; color: #C9A84C; margin-bottom: 0.8rem; text-transform: uppercase; }
 
 .evol-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
@@ -108,7 +108,7 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
 .cell-hi { color: #C9A84C; font-weight: 500; }
 
 .ebd-dest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 2rem; }
-.ebd-dest-card { background: #111F30; border: 1px solid #C9A84C44; border-radius: 12px; padding: 1.2rem 1.3rem; }
+.ebd-dest-card { background: #111F30; border: 1px solid #C9A84C44; border-radius: 12px; padding: 1.2rem 1.3rem; position: relative; }
 .ebd-dest-card-title { font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.16em; color: #C9A84C; margin-bottom: 0.8rem; text-transform: uppercase; border-bottom: 1px solid #C9A84C22; padding-bottom: 0.5rem; }
 .ebd-dest-lider { font-size: 0.68rem; color: #8A7E6A; font-family: 'Cinzel', serif; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
 .ebd-dest-name { font-size: 1rem; color: #E8DFC8; padding: 0.3rem 0; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1A2E4455; }
@@ -118,7 +118,7 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
 .ebd-star { color: #C9A84C; font-size: 0.8rem; flex-shrink: 0; }
 
 .sala-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 1.5rem; }
-.ebd-sala-card { background: #111F30; border: 1px solid #C9A84C33; border-radius: 12px; padding: 1.3rem 1.4rem; }
+.ebd-sala-card { background: #111F30; border: 1px solid #C9A84C33; border-radius: 12px; padding: 1.3rem 1.4rem; position: relative; }
 .ebd-sala-card-title { font-family: 'Cinzel', serif; font-size: 0.9rem; letter-spacing: 0.14em; color: #C9A84C; margin-bottom: 0.3rem; text-transform: uppercase; }
 .ebd-sala-card-freq { font-size: 1.5rem; font-weight: 600; color: #E8DFC8; font-family: 'Cinzel', serif; margin-bottom: 0.8rem; }
 .ebd-aluno-row { display: flex; align-items: center; gap: 10px; padding: 0.28rem 0; font-size: 0.88rem; color: #C8BDA5; }
@@ -131,6 +131,40 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
 .ebd-verse { text-align: center; font-style: italic; color: #8A7E6A; font-size: 0.95rem; margin-top: 2rem; padding: 1.2rem; border-top: 1px solid #C9A84C22; }
 .admin-link { position: fixed; bottom: 1.2rem; right: 1.5rem; font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 0.1em; color: #2A3A4A; text-decoration: none; transition: color 0.2s; }
 .admin-link:hover { color: #C9A84C44; }
+
+/* ── FULLSCREEN BUTTON ── */
+.fs-btn {
+  position: absolute; top: 0.6rem; right: 0.6rem;
+  background: transparent; border: 1px solid #C9A84C33;
+  border-radius: 5px; color: #C9A84C44; cursor: pointer;
+  font-size: 0.75rem; padding: 0.15rem 0.42rem; line-height: 1.5;
+  transition: color 0.15s, border-color 0.15s, background 0.15s; z-index: 5;
+}
+.fs-btn:hover { color: #C9A84C; border-color: #C9A84C77; background: #C9A84C11; }
+
+/* Fullscreen overlay styling */
+.ebd-card:fullscreen,
+.ebd-chart-box:fullscreen,
+.ebd-sala-card:fullscreen,
+.ebd-progress-wrap:fullscreen,
+.ebd-dest-card:fullscreen,
+.ebd-docente-wrap:fullscreen {
+  background: #0D1B2A !important;
+  padding: 4rem 6rem;
+  display: flex; flex-direction: column; justify-content: center;
+  overflow-y: auto;
+}
+.ebd-card:fullscreen .ebd-card-value { font-size: 6rem; }
+.ebd-card:fullscreen .ebd-card-label { font-size: 1.2rem; margin-bottom: 1.5rem; }
+.ebd-card:fullscreen .ebd-card-sub { font-size: 1.1rem; margin-top: 1rem; }
+.ebd-sala-card:fullscreen { padding: 4rem 8rem; }
+.ebd-sala-card:fullscreen .ebd-aluno-row { padding: 0.55rem 0; font-size: 1.15rem; }
+.ebd-sala-card:fullscreen .ebd-pts-bar { width: 140px; height: 8px; }
+.ebd-sala-card:fullscreen .ebd-sala-card-title { font-size: 1.4rem; margin-bottom: 0.5rem; }
+.ebd-sala-card:fullscreen .ebd-sala-card-freq { font-size: 2rem; margin-bottom: 1.2rem; }
+.ebd-chart-box:fullscreen canvas { max-height: 75vh; }
+.ebd-chart-box:fullscreen .evol-table th,
+.ebd-chart-box:fullscreen .evol-table td { font-size: 1rem; padding: 0.8rem 1rem; }
 </style>
 </head>
 <body>
@@ -169,17 +203,19 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
   <!-- VISÃO GERAL -->
   <div id="sec-geral" class="ebd-section active">
     <div class="ebd-cards-row">
-      <div class="ebd-card"><div class="ebd-card-label">Freq. Geral</div><div class="ebd-card-value" id="card-freq">—</div><div class="ebd-card-sub">média das salas</div></div>
-      <div class="ebd-card"><div class="ebd-card-label">Alunos Ref.</div><div class="ebd-card-value" id="card-alunos">—</div><div class="ebd-card-sub">matriculados</div></div>
-      <div class="ebd-card"><div class="ebd-card-label">Último Dom.</div><div class="ebd-card-value" id="card-ultimo">—</div><div class="ebd-card-sub" id="card-ultimo-sub">presentes</div></div>
-      <div class="ebd-card"><div class="ebd-card-label">Corp. Docente</div><div class="ebd-card-value" id="card-docente">—</div><div class="ebd-card-sub">maior frequência</div></div>
+      <div class="ebd-card"><button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button><div class="ebd-card-label">Freq. Geral</div><div class="ebd-card-value" id="card-freq">—</div><div class="ebd-card-sub">média das salas</div></div>
+      <div class="ebd-card"><button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button><div class="ebd-card-label">Alunos Ref.</div><div class="ebd-card-value" id="card-alunos">—</div><div class="ebd-card-sub">matriculados</div></div>
+      <div class="ebd-card"><button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button><div class="ebd-card-label">Último Dom.</div><div class="ebd-card-value" id="card-ultimo">—</div><div class="ebd-card-sub" id="card-ultimo-sub">presentes</div></div>
+      <div class="ebd-card"><button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button><div class="ebd-card-label">Corp. Docente</div><div class="ebd-card-value" id="card-docente">—</div><div class="ebd-card-sub">maior frequência</div></div>
     </div>
     <div class="ebd-progress-wrap">
+      <button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button>
       <div class="ebd-progress-label">PROGRESSO DO TRIMESTRE</div>
       <div class="ebd-progress-bar"><div class="ebd-progress-fill" id="progressFill" style="width:0%"></div></div>
       <div class="ebd-progress-info"><span id="prog-inicio">—</span><span id="prog-meio">—</span><span id="prog-fim">—</span></div>
     </div>
     <div class="ebd-chart-box">
+      <button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button>
       <div class="ebd-chart-title">Frequência por sala (%)</div>
       <div style="position:relative;height:300px;"><canvas id="chartGeral" role="img" aria-label="Frequência por sala"></canvas></div>
     </div>
@@ -201,11 +237,13 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
       </button>
     </div>
     <div class="ebd-chart-box">
+      <button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button>
       <div class="ebd-chart-title">Presença por sala — aula a aula</div>
       <div style="overflow-x:auto;"><table class="evol-table" id="evolTable"></table></div>
       <div style="margin-top:1rem;font-size:0.78rem;color:#6A6058;font-style:italic;">✦ Valores em dourado indicam o maior número de presentes daquela sala ao longo das aulas.</div>
     </div>
     <div class="ebd-chart-box">
+      <button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button>
       <div class="ebd-chart-title">Total de presentes por domingo</div>
       <div style="position:relative;height:220px;"><canvas id="chartTotal" role="img" aria-label="Total por aula"></canvas></div>
     </div>
@@ -224,7 +262,7 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
   <!-- RANKING -->
   <div id="sec-ranking" class="ebd-section">
     <div class="ebd-podium" id="podium"></div>
-    <div class="ebd-chart-box"><table class="ebd-rank-table" id="rankTable"></table></div>
+    <div class="ebd-chart-box"><button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button><table class="ebd-rank-table" id="rankTable"></table></div>
     <div class="ebd-docente-wrap" id="rank-docente"></div>
   </div>
 </div>
@@ -330,8 +368,9 @@ function buildChartTotal(datas, totais) {
 }
 
 function buildSalaCard(salaKey, salaData) {
-  const maxPts = Math.max(...salaData.alunos.map(a => a.pts), 0);
-  const rows = salaData.alunos.map(a => {
+  const sorted = [...salaData.alunos].sort((a, b) => b.pts - a.pts);
+  const maxPts = Math.max(...sorted.map(a => a.pts), 0);
+  const rows = sorted.map(a => {
     const pct = maxPts > 0 ? Math.round((a.pts / maxPts) * 100) : 0;
     const perfect = a.pts === maxPts && a.pts === salaData.datas.length;
     return `<div class="ebd-aluno-row">
@@ -342,6 +381,7 @@ function buildSalaCard(salaKey, salaData) {
   }).join('');
   const titulo = salaKey === 'PROFESSORES' ? 'Professores / Coord.' : capitalize(salaKey);
   return `<div class="ebd-sala-card">
+    <button class="fs-btn" onclick="toggleFS(this.parentElement)" title="Tela cheia">⛶</button>
     <div class="ebd-sala-card-title">${titulo}</div>
     <div class="ebd-sala-card-freq">${salaData.freq_pct ? salaData.freq_pct.toFixed(2) + '%' : '—'} <span style="font-size:0.78rem;color:#8A7E6A;font-weight:400;">· ${salaData.alunos.length} alunos ref.</span></div>
     ${rows}
@@ -550,6 +590,14 @@ async function loadData() {
       document.getElementById('loading-screen').style.display = 'none';
       document.getElementById('error-screen').classList.add('show');
     }, 400);
+  }
+}
+
+function toggleFS(el) {
+  if (!document.fullscreenElement) {
+    el.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
   }
 }
 
