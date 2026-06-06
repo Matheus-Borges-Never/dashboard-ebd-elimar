@@ -173,7 +173,6 @@ const S = {
   chamadaTrimestre: null,
   chamadaSala: null,
   chamadaData: null,
-  chamadaPresencas: {},
 };
 
 // ── API ────────────────────────────────────────────────────────────────────────
@@ -266,7 +265,7 @@ function switchTab(tab) {
   S.tab = tab;
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   if (tab === 'salas') S.editSala = null;
-  if (tab === 'chamada') { S.chamadaData = null; S.chamadaPresencas = {}; }
+  if (tab === 'chamada') { S.chamadaData = null; }
   renderTab();
 }
 
@@ -404,7 +403,8 @@ async function setAtivo(id) {
 // ── TAB: SALAS ────────────────────────────────────────────────────────────────
 function renderSalas() {
   if (!S.salasTrimestre) S.salasTrimestre = defaultTrimestre();
-  const salas = (S.db.salas || []).filter(s => s.trimestre_id === S.salasTrimestre);
+  const salas = (S.db.salas || []).filter(s => s.trimestre_id === S.salasTrimestre)
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   const ev = S.editSala || {};
 
   const listHtml = salas.length === 0
@@ -479,7 +479,8 @@ function renderAlunos() {
   const salas = (S.db.salas || []).filter(s => s.trimestre_id === S.alunosTrimestre);
   if (!S.alunosSala && salas.length > 0) S.alunosSala = salas[0].id;
 
-  const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.alunosSala);
+  const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.alunosSala)
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
   const listHtml = !S.alunosSala
     ? `<div class="empty-state">Selecione uma sala.</div>`
@@ -529,7 +530,7 @@ function renderAlunos() {
 }
 
 async function addAluno() {
-  const nome = document.getElementById('aluno-nome').value.trim();
+  const nome = document.getElementById('aluno-nome').value.trim().toUpperCase();
   if (!nome) { toast('Informe o nome do aluno.', 'err'); return; }
   try {
     await api('saveAluno', { nome, sala_id: S.alunosSala });
@@ -555,7 +556,8 @@ function renderChamada() {
   if (!S.chamadaSala && salas.length > 0) S.chamadaSala = salas[0].id;
 
   const trimestre = (S.db.trimestres || []).find(t => t.id === S.chamadaTrimestre);
-  const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.chamadaSala);
+  const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.chamadaSala)
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   const presencas = S.db.presencas || [];
 
   let sundaysHtml = '';
@@ -587,8 +589,7 @@ function renderChamada() {
 
     if (S.chamadaData) {
       const rows = alunos.map(a => {
-        const dbVal = presencas.find(p => p.aluno_id === a.id && p.data === S.chamadaData)?.presente || false;
-        const val = S.chamadaPresencas.hasOwnProperty(a.id) ? S.chamadaPresencas[a.id] : dbVal;
+        const val = presencas.find(p => p.aluno_id === a.id && p.data === S.chamadaData)?.presente || false;
         return `<div class="aluno-toggle">
           <div class="aluno-toggle-name">${a.nome}</div>
           <button class="toggle-btn ${val ? 'toggle-presente' : 'toggle-ausente'}"
@@ -596,10 +597,9 @@ function renderChamada() {
         </div>`;
       }).join('');
 
-      const presCount = alunos.filter(a => {
-        const dbVal = presencas.find(p => p.aluno_id === a.id && p.data === S.chamadaData)?.presente || false;
-        return S.chamadaPresencas.hasOwnProperty(a.id) ? S.chamadaPresencas[a.id] : dbVal;
-      }).length;
+      const presCount = alunos.filter(a =>
+        presencas.find(p => p.aluno_id === a.id && p.data === S.chamadaData)?.presente || false
+      ).length;
 
       formHtml = `
         <div class="section-card">
@@ -611,7 +611,6 @@ function renderChamada() {
             ? '<div class="empty-state">Nenhum aluno nesta sala.</div>'
             : `<div class="item-list" style="margin-bottom:1rem">${rows}</div>
                <div class="actions-row">
-                 <button class="btn" onclick="saveChamada()">SALVAR CHAMADA</button>
                  <button class="btn btn-ghost btn-sm" onclick="marcarTodos(true)">Marcar Todos</button>
                  <button class="btn btn-ghost btn-sm" onclick="marcarTodos(false)">Desmarcar Todos</button>
                </div>`}
@@ -623,13 +622,13 @@ function renderChamada() {
     <div class="select-bar">
       <div class="field">
         <label>Trimestre</label>
-        <select onchange="S.chamadaTrimestre=this.value;S.chamadaSala=null;S.chamadaData=null;S.chamadaPresencas={};renderChamada()">
+        <select onchange="S.chamadaTrimestre=this.value;S.chamadaSala=null;S.chamadaData=null;renderChamada()">
           ${trimOpts(S.chamadaTrimestre)}
         </select>
       </div>
       <div class="field">
         <label>Sala</label>
-        <select onchange="S.chamadaSala=this.value;S.chamadaData=null;S.chamadaPresencas={};renderChamada()">
+        <select onchange="S.chamadaSala=this.value;S.chamadaData=null;renderChamada()">
           <option value="">— Selecione —</option>
           ${salaOpts(S.chamadaTrimestre, S.chamadaSala)}
         </select>
@@ -645,30 +644,37 @@ function selectSunday(data) {
   renderChamada();
 }
 
+function _localPresenca(alunoId, data, newVal) {
+  // Atualiza S.db.presencas localmente sem buscar do servidor
+  // (evita sobrescrever alunos recém-adicionados que ainda não estão no blob)
+  S.db.presencas = S.db.presencas || [];
+  const idx = S.db.presencas.findIndex(p => p.aluno_id === alunoId && p.data === data);
+  if (idx >= 0) S.db.presencas[idx].presente = newVal;
+  else S.db.presencas.push({ aluno_id: alunoId, data, presente: newVal });
+}
+
 function toggleP(alunoId) {
-  const dbVal = (S.db.presencas || []).find(p => p.aluno_id === alunoId && p.data === S.chamadaData)?.presente || false;
-  const cur = S.chamadaPresencas.hasOwnProperty(alunoId) ? S.chamadaPresencas[alunoId] : dbVal;
-  S.chamadaPresencas[alunoId] = !cur;
+  const cur = S.db.presencas.find(p => p.aluno_id === alunoId && p.data === S.chamadaData)?.presente || false;
+  const newVal = !cur;
+
+  // Atualiza estado local imediatamente
+  _localPresenca(alunoId, S.chamadaData, newVal);
   renderChamada();
+
+  // Salva automaticamente (sem esperar)
+  api('savePresencaLote', { presencas: [{ aluno_id: alunoId, data: S.chamadaData, presente: newVal }] })
+    .catch(e => toast('Erro ao salvar: ' + e.message, 'err'));
 }
 
-function marcarTodos(val) {
-  (S.db.alunos || []).filter(a => a.sala_id === S.chamadaSala).forEach(a => { S.chamadaPresencas[a.id] = val; });
-  renderChamada();
-}
-
-async function saveChamada() {
+async function marcarTodos(val) {
   const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.chamadaSala);
-  const presencas = alunos.map(a => {
-    const dbVal = (S.db.presencas || []).find(p => p.aluno_id === a.id && p.data === S.chamadaData)?.presente || false;
-    return { aluno_id: a.id, data: S.chamadaData, presente: S.chamadaPresencas.hasOwnProperty(a.id) ? S.chamadaPresencas[a.id] : dbVal };
-  });
+  const presencas = alunos.map(a => ({ aluno_id: a.id, data: S.chamadaData, presente: val }));
+  presencas.forEach(p => _localPresenca(p.aluno_id, p.data, p.presente));
+  renderChamada();
   try {
     await api('savePresencaLote', { presencas });
-    S.chamadaPresencas = {};
-    toast('Chamada salva!');
-    renderChamada();
-  } catch (e) { toast(e.message, 'err'); }
+    toast(val ? 'Todos marcados como presentes!' : 'Todos desmarcados!');
+  } catch (e) { toast('Erro ao salvar: ' + e.message, 'err'); }
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────

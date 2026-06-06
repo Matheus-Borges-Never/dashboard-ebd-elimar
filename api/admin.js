@@ -136,7 +136,8 @@ export default async function handler(req, res) {
         else db.presencas.push({ aluno_id: p.aluno_id, data: p.data, presente: !!p.presente });
       }
       await writeDB(token, db);
-      return res.status(200).json({ ok: true, db });
+      // Não retorna db para evitar sobrescrever alunos criados recentemente no frontend
+      return res.status(200).json({ ok: true });
     }
 
     // ── BULK IMPORT ──

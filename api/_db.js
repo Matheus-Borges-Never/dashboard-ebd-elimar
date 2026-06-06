@@ -21,6 +21,7 @@ export async function writeDB(token, data) {
     addRandomSuffix: false,
     token,
     allowOverwrite: true,
+    cacheControlMaxAge: 0,   // sem cache CDN — dashboard sempre recebe dado fresco
   });
 }
 
