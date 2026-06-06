@@ -8,7 +8,8 @@ export async function readDB(token) {
     return { trimestres: [], salas: [], alunos: [], presencas: [] };
   }
   const blob = blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
-  const res = await fetch(blob.url);
+  // Cache-busting param prevents Vercel CDN from serving stale data after overwrites
+  const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: 'no-store' });
   return res.json();
 }
 
