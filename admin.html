@@ -663,6 +663,7 @@ function toggleP(alunoId) {
 
   // Salva automaticamente (sem esperar)
   api('savePresencaLote', { presencas: [{ aluno_id: alunoId, data: S.chamadaData, presente: newVal }] })
+    .then(() => toast(newVal ? '✓ Marcado como presente' : '✓ Marcado como ausente'))
     .catch(e => toast('Erro ao salvar: ' + e.message, 'err'));
 }
 
