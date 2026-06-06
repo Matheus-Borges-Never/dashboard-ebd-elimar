@@ -195,6 +195,11 @@ body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #
 
   <!-- EVOLUÇÃO -->
   <div id="sec-evolucao" class="ebd-section">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
+      <button onclick="refreshData()" id="btnRefresh" style="background:#C9A84C;border:none;border-radius:8px;color:#0D1B2A;font-family:'Cinzel',serif;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;padding:0.55rem 1.1rem;cursor:pointer;transition:background 0.2s;">
+        ↺ ATUALIZAR
+      </button>
+    </div>
     <div class="ebd-chart-box">
       <div class="ebd-chart-title">Presença por sala — aula a aula</div>
       <div style="overflow-x:auto;"><table class="evol-table" id="evolTable"></table></div>
@@ -552,6 +557,13 @@ loadData();
 
 // Polling: atualiza o dashboard automaticamente a cada 30 segundos
 setInterval(loadData, 30_000);
+
+async function refreshData() {
+  const btn = document.getElementById('btnRefresh');
+  if (btn) { btn.disabled = true; btn.textContent = '↺ Atualizando…'; }
+  await loadData();
+  if (btn) { btn.disabled = false; btn.textContent = '↺ ATUALIZAR'; }
+}
 </script>
 </body>
 </html>
