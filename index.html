@@ -462,7 +462,7 @@ function ucWords(str) {
 
 async function loadData() {
   try {
-    const res = await fetch('/api/data');
+    const res = await fetch('/api/data', { cache: 'no-store' });
     if (!res.ok) throw new Error('sem dados');
     const data = await res.json();
     if (data.error) throw new Error(data.error);
@@ -549,6 +549,9 @@ async function loadData() {
 }
 
 loadData();
+
+// Polling: atualiza o dashboard automaticamente a cada 30 segundos
+setInterval(loadData, 30_000);
 </script>
 </body>
 </html>
