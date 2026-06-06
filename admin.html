@@ -6,184 +6,674 @@
 <title>Admin — EBD Recanto Elimar</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 18px; }
-body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #E8DFC8; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body { background: #0D1B2A; font-family: 'EB Garamond', Georgia, serif; color: #E8DFC8; min-height: 100vh; }
 
-.card {
-  background: #111F30;
-  border: 1px solid #C9A84C44;
-  border-radius: 16px;
-  padding: 2.5rem 2.5rem 2rem;
-  width: 100%;
-  max-width: 480px;
-  text-align: center;
-}
-
+/* ── LOGIN ── */
+.login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+.login-card { background: #111F30; border: 1px solid #C9A84C44; border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 400px; text-align: center; }
 .cross { font-size: 1rem; color: #C9A84C; letter-spacing: 0.4em; margin-bottom: 0.5rem; font-family: 'Cinzel', serif; }
-h1 { font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 700; color: #C9A84C; letter-spacing: 0.06em; margin-bottom: 0.3rem; }
-.sub { font-size: 0.82rem; color: #8A7E6A; font-style: italic; margin-bottom: 2rem; }
+.login-title { font-family: 'Cinzel', serif; font-size: 1.1rem; color: #C9A84C; letter-spacing: 0.06em; margin-bottom: 0.25rem; }
+.login-sub { font-size: 0.82rem; color: #8A7E6A; font-style: italic; margin-bottom: 2rem; }
+.divider { border: none; border-top: 1px solid #C9A84C22; margin: 1.5rem 0; }
+.login-err { color: #DBA0A0; font-size: 0.82rem; margin-top: 0.75rem; display: none; }
 
-.field { margin-bottom: 1.2rem; text-align: left; }
-label { display: block; font-family: 'Cinzel', serif; font-size: 0.62rem; letter-spacing: 0.14em; color: #8A7E6A; text-transform: uppercase; margin-bottom: 0.4rem; }
-
-input[type="password"],
-input[type="file"] {
-  width: 100%;
-  background: #0D1B2A;
-  border: 1px solid #C9A84C33;
-  border-radius: 8px;
-  color: #E8DFC8;
-  font-family: 'EB Garamond', serif;
-  font-size: 0.9rem;
-  padding: 0.7rem 1rem;
-  outline: none;
-  transition: border-color 0.2s;
+/* ── FIELDS ── */
+.field { margin-bottom: 1.1rem; text-align: left; }
+label, .field-label { display: block; font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.14em; color: #8A7E6A; text-transform: uppercase; margin-bottom: 0.35rem; }
+input[type="text"], input[type="password"], input[type="date"], select {
+  width: 100%; background: #0D1B2A; border: 1px solid #C9A84C33; border-radius: 8px;
+  color: #E8DFC8; font-family: 'EB Garamond', serif; font-size: 0.95rem;
+  padding: 0.6rem 0.9rem; outline: none; transition: border-color 0.2s;
 }
-input[type="password"]:focus,
-input[type="file"]:focus { border-color: #C9A84C88; }
+input:focus, select:focus { border-color: #C9A84C88; }
+select option { background: #111F30; }
 
-input[type="file"] { cursor: pointer; padding: 0.55rem 0.8rem; }
-input[type="file"]::file-selector-button {
-  background: #1A2E44;
-  border: 1px solid #C9A84C44;
-  border-radius: 6px;
-  color: #C9A84C;
-  font-family: 'Cinzel', serif;
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  padding: 0.3rem 0.8rem;
-  cursor: pointer;
-  margin-right: 0.8rem;
-}
-
+/* ── BUTTONS ── */
 .btn {
-  width: 100%;
-  background: #C9A84C;
-  border: none;
-  border-radius: 8px;
-  color: #0D1B2A;
-  font-family: 'Cinzel', serif;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  padding: 0.85rem;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-  margin-top: 0.5rem;
+  background: #C9A84C; border: none; border-radius: 8px; color: #0D1B2A;
+  font-family: 'Cinzel', serif; font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.12em; padding: 0.7rem 1.2rem; cursor: pointer;
+  transition: background 0.2s, transform 0.1s; white-space: nowrap;
 }
 .btn:hover { background: #E8C870; }
-.btn:active { transform: scale(0.98); }
+.btn:active { transform: scale(0.97); }
 .btn:disabled { background: #4A3A1A; color: #8A7E6A; cursor: not-allowed; transform: none; }
+.btn-full { width: 100%; margin-top: 0.25rem; }
+.btn-sm { padding: 0.38rem 0.8rem; font-size: 0.58rem; }
+.btn-danger { background: #3A1212; color: #DBA0A0; border: 1px solid #7A2A2A; }
+.btn-danger:hover { background: #4A1818; }
+.btn-ghost { background: transparent; border: 1px solid #C9A84C44; color: #C9A84C; }
+.btn-ghost:hover { background: #C9A84C18; }
+.btn-outline { background: transparent; border: 1px solid #C9A84C55; color: #C9A84C; }
+.btn-outline:hover { background: #C9A84C18; }
+.actions-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 
-.msg {
-  margin-top: 1.2rem;
-  font-size: 0.85rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  display: none;
-  text-align: left;
+/* ── LAYOUT ── */
+#admin-panel { min-height: 100vh; display: flex; flex-direction: column; }
+header.admin-header {
+  background: #0A1520; border-bottom: 1px solid #C9A84C33;
+  padding: 0.85rem 1.5rem; display: flex; align-items: center; gap: 0.75rem;
 }
-.msg.ok { background: #0D2A1A; border: 1px solid #2A7A4A; color: #7ADBA0; display: block; }
-.msg.err { background: #2A0D0D; border: 1px solid #7A2A2A; color: #DBA0A0; display: block; }
-.msg.loading { background: #0D1F30; border: 1px solid #C9A84C44; color: #C9A84C; display: block; }
+.header-brand { font-family: 'Cinzel', serif; color: #C9A84C; font-size: 0.82rem; letter-spacing: 0.1em; flex: 1; }
+.header-brand span { color: #8A7E6A; font-size: 0.68rem; }
 
-.back-link {
-  margin-top: 1.5rem;
-  font-size: 0.78rem;
-  color: #8A7E6A;
-  text-decoration: none;
-  font-family: 'Cinzel', serif;
-  letter-spacing: 0.1em;
-  transition: color 0.2s;
+nav.admin-nav {
+  background: #0D1B2A; border-bottom: 1px solid #C9A84C22;
+  display: flex; overflow-x: auto;
 }
-.back-link:hover { color: #C9A84C; }
-
-.file-info {
-  font-size: 0.72rem;
-  color: #6A6058;
-  font-style: italic;
-  margin-top: 0.4rem;
+.nav-tab {
+  padding: 0.85rem 1.4rem; font-family: 'Cinzel', serif; font-size: 0.62rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: #8A7E6A;
+  cursor: pointer; border: none; background: none;
+  border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
 }
+.nav-tab:hover { color: #C9A84C; }
+.nav-tab.active { color: #C9A84C; border-bottom-color: #C9A84C; }
 
-.divider { border: none; border-top: 1px solid #C9A84C22; margin: 1.5rem 0; }
+main#tab-content { flex: 1; padding: 1.5rem; max-width: 860px; width: 100%; margin: 0 auto; }
+
+/* ── CARDS ── */
+.section-card { background: #111F30; border: 1px solid #C9A84C33; border-radius: 12px; padding: 1.4rem; margin-bottom: 1.25rem; }
+.section-title { font-family: 'Cinzel', serif; font-size: 0.72rem; color: #C9A84C; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; padding-bottom: 0.55rem; border-bottom: 1px solid #C9A84C22; }
+
+/* ── LIST ITEMS ── */
+.item-list { display: flex; flex-direction: column; gap: 0.45rem; }
+.item-row { background: #0D1B2A; border: 1px solid #C9A84C1A; border-radius: 8px; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
+.item-name { flex: 1; font-size: 0.97rem; min-width: 120px; }
+.item-meta { font-size: 0.78rem; color: #8A7E6A; font-style: italic; }
+
+.badge-active { background: #0D2A1A; border: 1px solid #2A7A4A; color: #7ADBA0; font-family: 'Cinzel', serif; font-size: 0.52rem; letter-spacing: 0.1em; padding: 0.18rem 0.5rem; border-radius: 4px; }
+.badge-count { background: #1A2E44; border: 1px solid #C9A84C33; color: #C9A84C; font-family: 'Cinzel', serif; font-size: 0.58rem; padding: 0.18rem 0.6rem; border-radius: 4px; }
+
+/* ── CHAMADA ── */
+.sunday-grid { display: flex; flex-direction: column; gap: 0.45rem; }
+.sunday-item { background: #0D1B2A; border: 1px solid #C9A84C1A; border-radius: 8px; padding: 0.7rem 1rem; display: flex; align-items: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; gap: 0.75rem; }
+.sunday-item:hover { border-color: #C9A84C44; background: #111F30; }
+.sunday-item.selected { border-color: #C9A84C; background: #141E2C; }
+.sunday-date { font-family: 'Cinzel', serif; font-size: 0.78rem; letter-spacing: 0.08em; flex: 1; }
+.sunday-stats { font-size: 0.78rem; color: #8A7E6A; }
+.sunday-empty { font-size: 0.75rem; color: #C9A84C44; font-style: italic; }
+
+.aluno-toggle { display: flex; align-items: center; background: #0D1B2A; border: 1px solid #C9A84C1A; border-radius: 8px; padding: 0.6rem 1rem; gap: 0.75rem; }
+.aluno-toggle-name { flex: 1; font-size: 0.97rem; }
+.toggle-btn { padding: 0.38rem 1rem; border-radius: 6px; font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 0.1em; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
+.toggle-presente { background: #C9A84C; color: #0D1B2A; }
+.toggle-ausente { background: #1A2535; color: #6A6A7A; border: 1px solid #C9A84C22; }
+
+/* ── MISC ── */
+.select-bar { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.select-bar .field { flex: 1; min-width: 180px; margin-bottom: 0; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.empty-state { text-align: center; padding: 2rem 1rem; color: #8A7E6A; font-style: italic; font-size: 0.9rem; }
+@media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+/* ── TOAST ── */
+#toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.88rem; opacity: 0; transform: translateY(8px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; z-index: 1000; max-width: 280px; }
+#toast.show { opacity: 1; transform: translateY(0); }
+#toast.ok { background: #0D2A1A; border: 1px solid #2A7A4A; color: #7ADBA0; }
+#toast.err { background: #2A0D0D; border: 1px solid #7A2A2A; color: #DBA0A0; }
 </style>
 </head>
 <body>
 
-<div class="card">
-  <div class="cross">✦ ✝ ✦</div>
-  <h1>Painel Administrativo</h1>
-  <div class="sub">EBD Recanto Elimar · Atualização de Dados</div>
-
-  <hr class="divider">
-
-  <div class="field">
-    <label>Senha de acesso</label>
-    <input type="password" id="senha" placeholder="••••" autocomplete="off" />
+<!-- Login -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-card">
+    <div class="cross">✦ ✝ ✦</div>
+    <h1 class="login-title">Painel Administrativo</h1>
+    <div class="login-sub">EBD Recanto Elimar</div>
+    <hr class="divider">
+    <div class="field">
+      <label>Senha de acesso</label>
+      <input type="password" id="login-senha" placeholder="••••" autocomplete="off">
+    </div>
+    <button class="btn btn-full" id="login-btn" onclick="login()">ENTRAR</button>
+    <div class="login-err" id="login-err"></div>
+    <hr class="divider">
+    <a href="/" style="font-size:0.75rem;color:#8A7E6A;text-decoration:none;font-family:'Cinzel',serif;letter-spacing:0.1em;">← Voltar ao Dashboard</a>
   </div>
-
-  <div class="field">
-    <label>Planilha (.xlsx)</label>
-    <input type="file" id="arquivo" accept=".xlsx,.xls" />
-    <div class="file-info">A planilha atual será substituída pela nova.</div>
-  </div>
-
-  <button class="btn" id="btnEnviar" onclick="enviar()">ENVIAR E ATUALIZAR DASHBOARD</button>
-
-  <div class="msg" id="msg"></div>
-
-  <hr class="divider">
-  <a href="/" class="back-link">← Voltar ao Dashboard</a>
 </div>
 
+<!-- Admin Panel -->
+<div id="admin-panel" style="display:none">
+  <header class="admin-header">
+    <div class="header-brand">✦ EBD Recanto Elimar <span>· Administração</span></div>
+    <a href="/" class="btn btn-sm btn-ghost" style="text-decoration:none">Dashboard</a>
+    <button class="btn btn-sm btn-ghost" onclick="logout()">Sair</button>
+  </header>
+  <nav class="admin-nav">
+    <button class="nav-tab active" data-tab="trimestres" onclick="switchTab('trimestres')">Trimestres</button>
+    <button class="nav-tab" data-tab="salas" onclick="switchTab('salas')">Salas</button>
+    <button class="nav-tab" data-tab="alunos" onclick="switchTab('alunos')">Alunos</button>
+    <button class="nav-tab" data-tab="chamada" onclick="switchTab('chamada')">Chamada</button>
+  </nav>
+  <main id="tab-content"><div class="empty-state">Carregando…</div></main>
+</div>
+
+<div id="toast"></div>
+
 <script>
-async function enviar() {
-  const senha = document.getElementById('senha').value.trim();
-  const arquivo = document.getElementById('arquivo').files[0];
-  const msg = document.getElementById('msg');
-  const btn = document.getElementById('btnEnviar');
+// ── STATE ──────────────────────────────────────────────────────────────────────
+const S = {
+  senha: sessionStorage.getItem('ebd_admin_senha') || '',
+  db: null,
+  tab: 'trimestres',
+  // trimestres
+  editTrimestre: null,
+  // salas
+  salasTrimestre: null,
+  editSala: null,
+  // alunos
+  alunosTrimestre: null,
+  alunosSala: null,
+  // chamada
+  chamadaTrimestre: null,
+  chamadaSala: null,
+  chamadaData: null,
+  chamadaPresencas: {},
+};
 
-  msg.className = 'msg';
-  msg.textContent = '';
+// ── API ────────────────────────────────────────────────────────────────────────
+async function api(action, data = {}) {
+  const res = await fetch('/api/admin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ senha: S.senha, action, ...data }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'Erro desconhecido');
+  if (json.db) S.db = json.db;
+  return json;
+}
 
-  if (!senha) { showMsg('err', 'Informe a senha de acesso.'); return; }
-  if (!arquivo) { showMsg('err', 'Selecione a planilha antes de enviar.'); return; }
-  if (!arquivo.name.match(/\.(xlsx|xls)$/i)) { showMsg('err', 'O arquivo deve ser .xlsx ou .xls'); return; }
+// ── TOAST ──────────────────────────────────────────────────────────────────────
+let _toastTimer;
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+}
 
+// ── AUTH ───────────────────────────────────────────────────────────────────────
+async function login() {
+  const senha = document.getElementById('login-senha').value.trim();
+  if (!senha) return;
+  const errEl = document.getElementById('login-err');
+  const btn = document.getElementById('login-btn');
+  errEl.style.display = 'none';
   btn.disabled = true;
-  showMsg('loading', 'Enviando e processando planilha… aguarde.');
-
-  const form = new FormData();
-  form.append('senha', senha);
-  form.append('planilha', arquivo);
-
+  btn.textContent = 'Verificando…';
   try {
-    const res = await fetch('/api/upload', { method: 'POST', body: form });
-    const json = await res.json();
-
-    if (res.ok && json.ok) {
-      showMsg('ok', '✦ Planilha processada com sucesso! O dashboard foi atualizado.');
-      document.getElementById('arquivo').value = '';
-    } else {
-      showMsg('err', 'Erro: ' + (json.error || 'Resposta inesperada do servidor.'));
-    }
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha, action: 'load' }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro');
+    S.senha = senha;
+    S.db = data;
+    sessionStorage.setItem('ebd_admin_senha', senha);
+    showPanel();
   } catch (e) {
-    showMsg('err', 'Falha na conexão: ' + e.message);
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
   } finally {
     btn.disabled = false;
+    btn.textContent = 'ENTRAR';
   }
 }
 
-function showMsg(type, text) {
-  const msg = document.getElementById('msg');
-  msg.className = 'msg ' + type;
-  msg.textContent = text;
+function logout() {
+  sessionStorage.removeItem('ebd_admin_senha');
+  S.senha = ''; S.db = null;
+  document.getElementById('admin-panel').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-senha').value = '';
 }
 
-document.getElementById('senha').addEventListener('keydown', e => {
-  if (e.key === 'Enter') enviar();
-});
+function showPanel() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-panel').style.display = 'flex';
+  document.getElementById('admin-panel').style.flexDirection = 'column';
+  renderTab();
+}
+
+async function init() {
+  if (!S.senha) return;
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha: S.senha, action: 'load' }),
+    });
+    if (!res.ok) throw new Error();
+    S.db = await res.json();
+    showPanel();
+  } catch {
+    sessionStorage.removeItem('ebd_admin_senha');
+    S.senha = '';
+  }
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  S.tab = tab;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  if (tab === 'salas') S.editSala = null;
+  if (tab === 'chamada') { S.chamadaData = null; S.chamadaPresencas = {}; }
+  renderTab();
+}
+
+function renderTab() {
+  const map = { trimestres: renderTrimestres, salas: renderSalas, alunos: renderAlunos, chamada: renderChamada };
+  (map[S.tab] || renderTrimestres)();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function getSundays(inicio, fim, upToToday = false) {
+  const sundays = [];
+  const d = new Date(inicio + 'T12:00:00');
+  while (d.getDay() !== 0) d.setDate(d.getDate() + 1);
+  let end = new Date(fim + 'T12:00:00');
+  if (upToToday) {
+    const today = new Date(); today.setHours(23, 59, 59);
+    if (end > today) end = today;
+  }
+  while (d <= end) {
+    sundays.push(d.toISOString().split('T')[0]);
+    d.setDate(d.getDate() + 7);
+  }
+  return sundays;
+}
+
+function trimOpts(sel) {
+  return (S.db.trimestres || []).map(t =>
+    `<option value="${t.id}"${t.id === sel ? ' selected' : ''}>${t.nome}</option>`
+  ).join('');
+}
+
+function salaOpts(trimestreId, sel) {
+  return (S.db.salas || [])
+    .filter(s => s.trimestre_id === trimestreId)
+    .map(s => `<option value="${s.id}"${s.id === sel ? ' selected' : ''}>${s.nome}</option>`)
+    .join('');
+}
+
+function defaultTrimestre() {
+  const list = S.db.trimestres || [];
+  if (!list.length) return null;
+  return (list.find(t => t.ativo) || list[list.length - 1]).id;
+}
+
+// ── TAB: TRIMESTRES ───────────────────────────────────────────────────────────
+function renderTrimestres() {
+  const list = S.db.trimestres || [];
+  const ev = S.editTrimestre || {};
+
+  const listHtml = list.length === 0
+    ? `<div class="empty-state">Nenhum trimestre cadastrado.</div>`
+    : `<div class="item-list">${list.map(t => `
+        <div class="item-row">
+          <div style="flex:1">
+            <div class="item-name">${t.nome}</div>
+            <div class="item-meta">${fmtDate(t.inicio)} — ${fmtDate(t.fim)}</div>
+          </div>
+          ${t.ativo ? '<span class="badge-active">ATIVO</span>' : ''}
+          <div class="actions-row">
+            ${!t.ativo ? `<button class="btn btn-sm btn-ghost" onclick="setAtivo('${t.id}')">Ativar</button>` : ''}
+            <button class="btn btn-sm btn-outline" onclick="editTrimestre('${t.id}')">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="delTrimestre('${t.id}')">Excluir</button>
+          </div>
+        </div>`).join('')}</div>`;
+
+  document.getElementById('tab-content').innerHTML = `
+    <div class="section-card">
+      <div class="section-title">Trimestres Cadastrados</div>
+      ${listHtml}
+    </div>
+    <div class="section-card">
+      <div class="section-title">${ev.id ? 'Editar Trimestre' : 'Novo Trimestre'}</div>
+      <div class="field">
+        <label>Nome</label>
+        <input type="text" id="tri-nome" value="${ev.nome || ''}" placeholder="Ex: 1º Trimestre 2026">
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Data de Início</label>
+          <input type="date" id="tri-inicio" value="${ev.inicio || ''}">
+        </div>
+        <div class="field">
+          <label>Data de Fim</label>
+          <input type="date" id="tri-fim" value="${ev.fim || ''}">
+        </div>
+      </div>
+      <div class="actions-row">
+        <button class="btn" onclick="saveTrimestre()">SALVAR</button>
+        ${ev.id ? `<button class="btn btn-ghost" onclick="S.editTrimestre=null;renderTrimestres()">Cancelar</button>` : ''}
+      </div>
+    </div>`;
+}
+
+function editTrimestre(id) {
+  S.editTrimestre = S.db.trimestres.find(t => t.id === id);
+  renderTrimestres();
+}
+
+async function saveTrimestre() {
+  const nome = document.getElementById('tri-nome').value.trim();
+  const inicio = document.getElementById('tri-inicio').value;
+  const fim = document.getElementById('tri-fim').value;
+  if (!nome || !inicio || !fim) { toast('Preencha todos os campos.', 'err'); return; }
+  try {
+    await api('saveTrimestre', { id: S.editTrimestre?.id, nome, inicio, fim });
+    S.editTrimestre = null;
+    toast('Trimestre salvo!');
+    renderTrimestres();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function delTrimestre(id) {
+  if (!confirm('Excluir este trimestre e todos os dados relacionados (salas, alunos, presenças)?')) return;
+  try {
+    await api('deleteTrimestre', { id });
+    toast('Trimestre excluído.');
+    renderTrimestres();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function setAtivo(id) {
+  try {
+    await api('setTrimestreAtivo', { id });
+    toast('Trimestre ativado!');
+    renderTrimestres();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ── TAB: SALAS ────────────────────────────────────────────────────────────────
+function renderSalas() {
+  if (!S.salasTrimestre) S.salasTrimestre = defaultTrimestre();
+  const salas = (S.db.salas || []).filter(s => s.trimestre_id === S.salasTrimestre);
+  const ev = S.editSala || {};
+
+  const listHtml = salas.length === 0
+    ? `<div class="empty-state">Nenhuma sala neste trimestre.</div>`
+    : `<div class="item-list">${salas.map(s => {
+        const n = (S.db.alunos || []).filter(a => a.sala_id === s.id).length;
+        return `<div class="item-row">
+          <div class="item-name">${s.nome}</div>
+          <span class="badge-count">${n} aluno${n !== 1 ? 's' : ''}</span>
+          <div class="actions-row">
+            <button class="btn btn-sm btn-outline" onclick="editSala('${s.id}')">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="delSala('${s.id}')">Excluir</button>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+
+  document.getElementById('tab-content').innerHTML = `
+    <div class="select-bar">
+      <div class="field">
+        <label>Trimestre</label>
+        <select onchange="S.salasTrimestre=this.value;S.editSala=null;renderSalas()">
+          ${trimOpts(S.salasTrimestre)}
+        </select>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Salas Cadastradas</div>
+      ${listHtml}
+    </div>
+    <div class="section-card">
+      <div class="section-title">${ev.id ? 'Editar Sala' : 'Nova Sala'}</div>
+      <div class="field">
+        <label>Nome da Sala</label>
+        <input type="text" id="sala-nome" value="${ev.nome || ''}" placeholder="Ex: ADOLESCENTES">
+      </div>
+      <div class="actions-row">
+        <button class="btn" onclick="saveSala()">SALVAR</button>
+        ${ev.id ? `<button class="btn btn-ghost" onclick="S.editSala=null;renderSalas()">Cancelar</button>` : ''}
+      </div>
+    </div>`;
+}
+
+function editSala(id) {
+  S.editSala = S.db.salas.find(s => s.id === id);
+  renderSalas();
+}
+
+async function saveSala() {
+  const nome = document.getElementById('sala-nome').value.trim().toUpperCase();
+  if (!nome) { toast('Informe o nome da sala.', 'err'); return; }
+  if (!S.salasTrimestre) { toast('Selecione um trimestre.', 'err'); return; }
+  try {
+    await api('saveSala', { id: S.editSala?.id, nome, trimestre_id: S.salasTrimestre });
+    S.editSala = null;
+    toast('Sala salva!');
+    renderSalas();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function delSala(id) {
+  if (!confirm('Excluir esta sala e todos os alunos e presenças relacionados?')) return;
+  try {
+    await api('deleteSala', { id });
+    toast('Sala excluída.');
+    renderSalas();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ── TAB: ALUNOS ───────────────────────────────────────────────────────────────
+function renderAlunos() {
+  if (!S.alunosTrimestre) S.alunosTrimestre = defaultTrimestre();
+  const salas = (S.db.salas || []).filter(s => s.trimestre_id === S.alunosTrimestre);
+  if (!S.alunosSala && salas.length > 0) S.alunosSala = salas[0].id;
+
+  const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.alunosSala);
+
+  const listHtml = !S.alunosSala
+    ? `<div class="empty-state">Selecione uma sala.</div>`
+    : alunos.length === 0
+      ? `<div class="empty-state">Nenhum aluno nesta sala.</div>`
+      : `<div class="item-list">${alunos.map(a => `
+          <div class="item-row">
+            <div class="item-name">${a.nome}</div>
+            <button class="btn btn-sm btn-danger" onclick="delAluno('${a.id}')">Excluir</button>
+          </div>`).join('')}</div>`;
+
+  document.getElementById('tab-content').innerHTML = `
+    <div class="select-bar">
+      <div class="field">
+        <label>Trimestre</label>
+        <select onchange="S.alunosTrimestre=this.value;S.alunosSala=null;renderAlunos()">
+          ${trimOpts(S.alunosTrimestre)}
+        </select>
+      </div>
+      <div class="field">
+        <label>Sala</label>
+        <select onchange="S.alunosSala=this.value;renderAlunos()">
+          <option value="">— Selecione —</option>
+          ${salaOpts(S.alunosTrimestre, S.alunosSala)}
+        </select>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Alunos</div>
+      ${listHtml}
+    </div>
+    ${S.alunosSala ? `
+    <div class="section-card">
+      <div class="section-title">Adicionar Aluno</div>
+      <div class="field">
+        <label>Nome completo</label>
+        <input type="text" id="aluno-nome" placeholder="Nome do aluno">
+      </div>
+      <button class="btn" onclick="addAluno()">ADICIONAR</button>
+    </div>` : ''}`;
+
+  if (S.alunosSala) {
+    document.getElementById('aluno-nome').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addAluno();
+    });
+  }
+}
+
+async function addAluno() {
+  const nome = document.getElementById('aluno-nome').value.trim();
+  if (!nome) { toast('Informe o nome do aluno.', 'err'); return; }
+  try {
+    await api('saveAluno', { nome, sala_id: S.alunosSala });
+    toast(`${nome} adicionado!`);
+    renderAlunos();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function delAluno(id) {
+  const a = S.db.alunos.find(x => x.id === id);
+  if (!confirm(`Excluir "${a?.nome}" e todas as presenças?`)) return;
+  try {
+    await api('deleteAluno', { id });
+    toast('Aluno excluído.');
+    renderAlunos();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ── TAB: CHAMADA ──────────────────────────────────────────────────────────────
+function renderChamada() {
+  if (!S.chamadaTrimestre) S.chamadaTrimestre = defaultTrimestre();
+  const salas = (S.db.salas || []).filter(s => s.trimestre_id === S.chamadaTrimestre);
+  if (!S.chamadaSala && salas.length > 0) S.chamadaSala = salas[0].id;
+
+  const trimestre = (S.db.trimestres || []).find(t => t.id === S.chamadaTrimestre);
+  const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.chamadaSala);
+  const presencas = S.db.presencas || [];
+
+  let sundaysHtml = '';
+  let formHtml = '';
+
+  if (trimestre && S.chamadaSala) {
+    const sundays = getSundays(trimestre.inicio, trimestre.fim, true).reverse();
+
+    sundaysHtml = `
+      <div class="section-card">
+        <div class="section-title">Selecione um Domingo</div>
+        ${sundays.length === 0
+          ? '<div class="empty-state">Nenhum domingo disponível ainda.</div>'
+          : `<div class="sunday-grid">${sundays.map(d => {
+              const alunoIds = alunos.map(a => a.id);
+              const hasData = presencas.some(p => alunoIds.includes(p.aluno_id) && p.data === d);
+              const presCount = presencas.filter(p => alunoIds.includes(p.aluno_id) && p.data === d && p.presente).length;
+              return `<div class="sunday-item${S.chamadaData === d ? ' selected' : ''}" onclick="selectSunday('${d}')">
+                <div>
+                  <div class="sunday-date">${fmtDate(d)}</div>
+                  ${hasData
+                    ? `<div class="sunday-stats">${presCount} de ${alunos.length} presentes</div>`
+                    : `<div class="sunday-empty">não preenchida</div>`}
+                </div>
+                ${hasData ? '<span class="badge-active">✓</span>' : ''}
+              </div>`;
+            }).join('')}</div>`}
+      </div>`;
+
+    if (S.chamadaData) {
+      const rows = alunos.map(a => {
+        const dbVal = presencas.find(p => p.aluno_id === a.id && p.data === S.chamadaData)?.presente || false;
+        const val = S.chamadaPresencas.hasOwnProperty(a.id) ? S.chamadaPresencas[a.id] : dbVal;
+        return `<div class="aluno-toggle">
+          <div class="aluno-toggle-name">${a.nome}</div>
+          <button class="toggle-btn ${val ? 'toggle-presente' : 'toggle-ausente'}"
+            onclick="toggleP('${a.id}')">${val ? 'Presente' : 'Ausente'}</button>
+        </div>`;
+      }).join('');
+
+      const presCount = alunos.filter(a => {
+        const dbVal = presencas.find(p => p.aluno_id === a.id && p.data === S.chamadaData)?.presente || false;
+        return S.chamadaPresencas.hasOwnProperty(a.id) ? S.chamadaPresencas[a.id] : dbVal;
+      }).length;
+
+      formHtml = `
+        <div class="section-card">
+          <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Chamada — ${fmtDate(S.chamadaData)}</span>
+            <span style="font-size:0.68rem;color:#8A7E6A;font-family:'EB Garamond',serif;text-transform:none;letter-spacing:0">${presCount}/${alunos.length} presentes</span>
+          </div>
+          ${alunos.length === 0
+            ? '<div class="empty-state">Nenhum aluno nesta sala.</div>'
+            : `<div class="item-list" style="margin-bottom:1rem">${rows}</div>
+               <div class="actions-row">
+                 <button class="btn" onclick="saveChamada()">SALVAR CHAMADA</button>
+                 <button class="btn btn-ghost btn-sm" onclick="marcarTodos(true)">Marcar Todos</button>
+                 <button class="btn btn-ghost btn-sm" onclick="marcarTodos(false)">Desmarcar Todos</button>
+               </div>`}
+        </div>`;
+    }
+  }
+
+  document.getElementById('tab-content').innerHTML = `
+    <div class="select-bar">
+      <div class="field">
+        <label>Trimestre</label>
+        <select onchange="S.chamadaTrimestre=this.value;S.chamadaSala=null;S.chamadaData=null;S.chamadaPresencas={};renderChamada()">
+          ${trimOpts(S.chamadaTrimestre)}
+        </select>
+      </div>
+      <div class="field">
+        <label>Sala</label>
+        <select onchange="S.chamadaSala=this.value;S.chamadaData=null;S.chamadaPresencas={};renderChamada()">
+          <option value="">— Selecione —</option>
+          ${salaOpts(S.chamadaTrimestre, S.chamadaSala)}
+        </select>
+      </div>
+    </div>
+    ${sundaysHtml}
+    ${formHtml}`;
+}
+
+function selectSunday(data) {
+  S.chamadaData = data;
+  S.chamadaPresencas = {};
+  renderChamada();
+}
+
+function toggleP(alunoId) {
+  const dbVal = (S.db.presencas || []).find(p => p.aluno_id === alunoId && p.data === S.chamadaData)?.presente || false;
+  const cur = S.chamadaPresencas.hasOwnProperty(alunoId) ? S.chamadaPresencas[alunoId] : dbVal;
+  S.chamadaPresencas[alunoId] = !cur;
+  renderChamada();
+}
+
+function marcarTodos(val) {
+  (S.db.alunos || []).filter(a => a.sala_id === S.chamadaSala).forEach(a => { S.chamadaPresencas[a.id] = val; });
+  renderChamada();
+}
+
+async function saveChamada() {
+  const alunos = (S.db.alunos || []).filter(a => a.sala_id === S.chamadaSala);
+  const presencas = alunos.map(a => {
+    const dbVal = (S.db.presencas || []).find(p => p.aluno_id === a.id && p.data === S.chamadaData)?.presente || false;
+    return { aluno_id: a.id, data: S.chamadaData, presente: S.chamadaPresencas.hasOwnProperty(a.id) ? S.chamadaPresencas[a.id] : dbVal };
+  });
+  try {
+    await api('savePresencaLote', { presencas });
+    S.chamadaPresencas = {};
+    toast('Chamada salva!');
+    renderChamada();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+document.getElementById('login-senha').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+init();
 </script>
 </body>
 </html>
