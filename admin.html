@@ -685,6 +685,8 @@ async function salvarChamada() {
     await api('savePresencaLote', { presencas });
     const total = presencas.filter(p => p.presente).length;
     toast(`✓ Chamada salva! ${total} de ${alunos.length} presentes.`);
+    // Sinaliza para o dashboard atualizar imediatamente (mesma aba/navegador)
+    try { new BroadcastChannel('ebd-updates').postMessage('refresh'); } catch {}
   } catch (e) {
     toast('Erro ao salvar: ' + e.message, 'err');
   } finally {
