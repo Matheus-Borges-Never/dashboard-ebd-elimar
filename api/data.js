@@ -66,13 +66,17 @@ function computeFromDB(db) {
       freq_pct,
     };
 
-    ranking.push({ sala: sala.nome, freq: freq_pct });
-    relatorio.push({
-      sala: sala.nome,
-      alunos_ref: alunos.length,
-      freq_pct,
-      ultimo_domingo: totais_por_aula[totais_por_aula.length - 1] ?? 0,
-    });
+    // Professores/coordenação ficam fora do ranking (igual à planilha)
+    const isProfessores = /professor|coordena/i.test(sala.nome);
+    if (!isProfessores) {
+      ranking.push({ sala: sala.nome, freq: freq_pct });
+      relatorio.push({
+        sala: sala.nome,
+        alunos_ref: alunos.length,
+        freq_pct,
+        ultimo_domingo: totais_por_aula[totais_por_aula.length - 1] ?? 0,
+      });
+    }
   }
 
   ranking.sort((a, b) => b.freq - a.freq);
