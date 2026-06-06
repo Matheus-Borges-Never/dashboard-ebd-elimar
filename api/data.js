@@ -1,13 +1,20 @@
 import { list } from '@vercel/blob';
 
 export default async function handler(req, res) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) {
+    return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN não configurado.' });
+  }
+
   try {
-    const { blobs } = await list({ prefix: 'ebd-data.json' });
+    const { blobs } = await list({ prefix: 'ebd-data.json', token });
+
     if (!blobs || blobs.length === 0) {
       return res.status(404).json({ error: 'Nenhuma planilha carregada ainda.' });
     }
 
-    const blob = blobs[0];
+    // pega o mais recente
+    const blob = blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
     const response = await fetch(blob.url);
     const data = await response.json();
 

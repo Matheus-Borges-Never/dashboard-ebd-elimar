@@ -1,20 +1,11 @@
 import { put } from '@vercel/blob';
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
-import path from 'path';
 import XLSX from 'xlsx';
 
 export const config = { api: { bodyParser: false } };
 
 const SENHA = '0705';
-
-function parseSheet(wb, sheetName) {
-  const names = wb.SheetNames.map(s => s.trim());
-  const match = names.find(n => n.toUpperCase().includes(sheetName.toUpperCase()));
-  if (!match) return null;
-  const ws = wb.Sheets[wb.SheetNames[names.indexOf(match)]];
-  return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-}
 
 function toDateStr(val) {
   if (!val) return null;
@@ -27,6 +18,13 @@ function toDateStr(val) {
     return String(val.getDate()).padStart(2,'0') + '/' + String(val.getMonth()+1).padStart(2,'0');
   }
   return null;
+}
+
+function parseSheet(wb, sheetSearch) {
+  const names = wb.SheetNames.map(s => s.trim().toUpperCase());
+  const idx = names.findIndex(n => n.includes(sheetSearch.toUpperCase()));
+  if (idx === -1) return null;
+  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[idx]], { header: 1, defval: null });
 }
 
 function parseSala(rows) {
@@ -56,7 +54,7 @@ function parseSala(rows) {
         totais = [];
         for (let c = 2; c < 2 + datas.length; c++) {
           const v = row[c];
-          totais.push(v !== null && v !== undefined && !isNaN(Number(v)) ? Number(v) : 0);
+          totais.push((v !== null && v !== undefined && !isNaN(Number(v))) ? Number(v) : 0);
         }
       }
       if (nome === 'FREQUÊNCIA MÉDIA %') {
@@ -71,8 +69,7 @@ function parseSala(rows) {
     if (isNaN(pts)) continue;
     const presencas = [];
     for (let c = 2; c < 2 + datas.length; c++) {
-      const v = row[c];
-      presencas.push(Number(v) === 1 ? 1 : 0);
+      presencas.push(Number(row[c]) === 1 ? 1 : 0);
     }
     alunos.push({ nome, pts, presencas });
   }
@@ -82,11 +79,11 @@ function parseSala(rows) {
 
 function parseRanking(rows) {
   if (!rows) return { ranking: [], relatorio: [] };
-  const ranking = [];
   const salaNames = ['ADOLESCENTES','JOVENS','IRMÃOS','IRMÃS'];
+  const ranking = [];
   for (const row of rows) {
     const sala = String(row[0] || '').trim();
-    if (salaNames.includes(sala) && row[1] !== null) {
+    if (salaNames.includes(sala) && row[1] !== null && row[1] !== undefined) {
       ranking.push({ sala, freq: Math.round(Number(row[1]) * 10000) / 100, pos: String(row[2] || '').trim() });
     }
   }
@@ -102,7 +99,7 @@ function parseRanking(rows) {
     for (let i = headerIdx + 1; i < rows.length; i++) {
       const row = rows[i];
       const sala = String(row[0]||'').trim();
-      if (!sala || sala === 'NaN') continue;
+      if (!sala || sala === 'NaN' || sala === 'nan') continue;
       const alunos_ref = Number(row[1]) || 0;
       const freq_pct   = row[4] !== null ? Math.round(Number(row[4]) * 10000) / 100 : 0;
       const ultimo     = Number(row[5]) || 0;
@@ -115,56 +112,49 @@ function parseRanking(rows) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) {
+    return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN não configurado nas variáveis de ambiente da Vercel.' });
+  }
+
   const form = new IncomingForm({ keepExtensions: true, maxFileSize: 10 * 1024 * 1024 });
 
   form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(400).json({ error: 'Erro ao processar upload' });
+    if (err) return res.status(400).json({ error: 'Erro ao processar upload: ' + err.message });
 
     const senha = Array.isArray(fields.senha) ? fields.senha[0] : fields.senha;
-    if (senha !== SENHA) return res.status(401).json({ error: 'Senha incorreta' });
+    if (senha !== SENHA) return res.status(401).json({ error: 'Senha incorreta.' });
 
     const file = Array.isArray(files.planilha) ? files.planilha[0] : files.planilha;
-    if (!file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    if (!file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
 
     try {
       const buffer = fs.readFileSync(file.filepath);
       const wb = XLSX.read(buffer, { type: 'buffer', cellDates: false });
 
-      const sheetMap = {
-        'ADOLESCENTES': 'ADOLESCENTES',
-        'JOVENS': 'JOVENS',
-        'IRMÃOS': 'IRMÃOS',
-        'IRMÃS': 'IRMÃS',
-        'PROFESSORES': 'PROFESSORES',
-        'RANKING': 'RANKING',
-      };
-
       const data = {};
-      for (const [key, sheetSearch] of Object.entries(sheetMap)) {
-        const rows = parseSheet(wb, sheetSearch);
-        if (key === 'RANKING') {
-          const { ranking, relatorio } = parseRanking(rows);
-          data.ranking = ranking;
-          data.relatorio = relatorio;
-        } else {
-          const parsed = parseSala(rows);
-          if (parsed) data[key] = parsed;
-        }
+
+      const salaKeys = ['ADOLESCENTES','JOVENS','IRMÃOS','IRMÃS','PROFESSORES'];
+      for (const key of salaKeys) {
+        const rows = parseSheet(wb, key);
+        const parsed = parseSala(rows);
+        if (parsed) data[key] = parsed;
       }
 
-      // compute totals
-      const totalAlunos = Object.entries(data)
-        .filter(([k]) => k !== 'ranking' && k !== 'relatorio')
-        .reduce((acc, [, v]) => acc + (v.alunos ? v.alunos.length : 0), 0);
-      data.meta = { totalAlunos, geradoEm: new Date().toISOString() };
+      const rankRows = parseSheet(wb, 'RANKING');
+      const { ranking, relatorio } = parseRanking(rankRows);
+      data.ranking = ranking;
+      data.relatorio = relatorio;
+      data.meta = { geradoEm: new Date().toISOString() };
 
       const json = JSON.stringify(data);
 
-      // Save to Vercel Blob
+      // Passa o token explicitamente para evitar problema de env var não carregada
       await put('ebd-data.json', json, {
         access: 'public',
         contentType: 'application/json',
         addRandomSuffix: false,
+        token,
       });
 
       return res.status(200).json({ ok: true, message: 'Planilha processada com sucesso!' });
