@@ -20,16 +20,11 @@ function toDateStr(val) {
   return null;
 }
 
-// Busca a aba ignorando espaços extras e maiúsculas/minúsculas
 function parseSheet(wb, sheetSearch) {
   const search = sheetSearch.trim().toUpperCase();
-  const match = wb.SheetNames.find(s => s.trim().toUpperCase() === search);
-  if (!match) {
-    // fallback: includes
-    const fallback = wb.SheetNames.find(s => s.trim().toUpperCase().includes(search));
-    if (!fallback) return null;
-    return XLSX.utils.sheet_to_json(wb.Sheets[fallback], { header: 1, defval: null });
-  }
+  const match = wb.SheetNames.find(s => s.trim().toUpperCase() === search)
+    || wb.SheetNames.find(s => s.trim().toUpperCase().includes(search));
+  if (!match) return null;
   return XLSX.utils.sheet_to_json(wb.Sheets[match], { header: 1, defval: null });
 }
 
@@ -85,33 +80,73 @@ function parseSala(rows) {
 
 function parseRanking(rows) {
   if (!rows) return { ranking: [], relatorio: [] };
+
   const salaNames = ['ADOLESCENTES','JOVENS','IRMÃOS','IRMÃS'];
+
+  // --- Bloco 1: ranking parcial (cabeçalho: SALAS | FREQUÊNCIA (%) ATUAL | POSIÇÃO) ---
+  // Localiza a linha de cabeçalho deste bloco
+  let rankHeaderIdx = -1;
+  for (let i = 0; i < rows.length; i++) {
+    const c0 = String(rows[i][0]||'').trim().toUpperCase();
+    const c1 = String(rows[i][1]||'').trim().toUpperCase();
+    const c2 = String(rows[i][2]||'').trim().toUpperCase();
+    if (c0 === 'SALAS' && c1.includes('FREQUÊNCIA') && c2.includes('POSIÇÃO')) {
+      rankHeaderIdx = i;
+      break;
+    }
+  }
+
   const ranking = [];
-  for (const row of rows) {
-    const sala = String(row[0] || '').trim();
-    if (salaNames.includes(sala) && row[1] !== null && row[1] !== undefined) {
-      ranking.push({ sala, freq: Math.round(Number(row[1]) * 10000) / 100, pos: String(row[2] || '').trim() });
+  if (rankHeaderIdx !== -1) {
+    for (let i = rankHeaderIdx + 1; i < rows.length; i++) {
+      const sala = String(rows[i][0]||'').trim();
+      if (!sala || sala === 'TOTAL') break; // para ao chegar no total ou linha vazia
+      if (!salaNames.includes(sala)) continue;
+      const freq = rows[i][1];
+      const pos  = rows[i][2];
+      if (freq !== null && freq !== undefined) {
+        ranking.push({
+          sala,
+          freq: Math.round(Number(freq) * 10000) / 100, // de decimal para %
+          pos: String(pos || '').trim()
+        });
+      }
+    }
+  }
+
+  // --- Bloco 2: relatório detalhado (cabeçalho: SALAS | Nº DE ALUNOS REFERENCIA | AULA | FREQUÊNCIA MÉDIA | FREQUÊNCIA (%) ATUAL | ÚLTIMO DOMINGO) ---
+  let relHeaderIdx = -1;
+  for (let i = 0; i < rows.length; i++) {
+    const c0 = String(rows[i][0]||'').trim().toUpperCase();
+    const c1 = String(rows[i][1]||'').trim().toUpperCase();
+    if (c0 === 'SALAS' && c1.includes('ALUNOS')) {
+      relHeaderIdx = i;
+      break;
     }
   }
 
   const relatorio = [];
-  let headerIdx = -1;
-  for (let i = 0; i < rows.length; i++) {
-    if (String(rows[i][0]||'').trim() === 'SALAS' && String(rows[i][1]||'').includes('ALUNOS')) {
-      headerIdx = i; break;
+  if (relHeaderIdx !== -1) {
+    // identifica qual coluna é cada campo pelo cabeçalho
+    const header = rows[relHeaderIdx].map(c => String(c||'').trim().toUpperCase());
+    const colAlunos  = header.findIndex(h => h.includes('ALUNOS'));
+    const colFreqPct = header.findIndex(h => h.includes('FREQUÊNCIA (%)') || h.includes('FREQUÊNCIA(%)'));
+    const colUltimo  = header.findIndex(h => h.includes('ÚLTIMO') || h.includes('ULTIMO'));
+
+    for (let i = relHeaderIdx + 1; i < rows.length; i++) {
+      const sala = String(rows[i][0]||'').trim();
+      if (!sala || sala === 'TOTAL') continue;
+      if (sala.startsWith(' ') || !sala) continue; // pula títulos de seção
+      const alunos_ref   = colAlunos  !== -1 ? (Number(rows[i][colAlunos])  || 0) : 0;
+      const freq_pct_raw = colFreqPct !== -1 ? rows[i][colFreqPct] : null;
+      const freq_pct     = freq_pct_raw !== null ? Math.round(Number(freq_pct_raw) * 10000) / 100 : null;
+      const ultimo       = colUltimo  !== -1 ? (Number(rows[i][colUltimo]) || 0) : 0;
+      if (alunos_ref > 0) {
+        relatorio.push({ sala, alunos_ref, freq_pct, ultimo_domingo: ultimo });
+      }
     }
   }
-  if (headerIdx !== -1) {
-    for (let i = headerIdx + 1; i < rows.length; i++) {
-      const row = rows[i];
-      const sala = String(row[0]||'').trim();
-      if (!sala || sala === 'NaN' || sala === 'nan') continue;
-      const alunos_ref = Number(row[1]) || 0;
-      const freq_pct   = row[4] !== null ? Math.round(Number(row[4]) * 10000) / 100 : 0;
-      const ultimo     = Number(row[5]) || 0;
-      if (alunos_ref > 0) relatorio.push({ sala, alunos_ref, freq_pct, ultimo_domingo: ultimo });
-    }
-  }
+
   return { ranking, relatorio };
 }
 
@@ -136,7 +171,6 @@ export default async function handler(req, res) {
       const buffer = fs.readFileSync(file.filepath);
       const wb = XLSX.read(buffer, { type: 'buffer', cellDates: false });
 
-      // Log dos nomes das abas para debug
       console.log('Abas encontradas:', wb.SheetNames);
 
       const data = {};
@@ -144,19 +178,22 @@ export default async function handler(req, res) {
         const rows = parseSheet(wb, key);
         console.log(`Aba ${key}:`, rows ? `${rows.length} linhas` : 'NÃO ENCONTRADA');
         const parsed = parseSala(rows);
-        if (parsed) data[key] = parsed;
+        if (parsed) {
+          data[key] = parsed;
+          console.log(`  → ${parsed.alunos.length} alunos, ${parsed.datas.length} datas, freq_pct=${parsed.freq_pct}`);
+        }
       }
 
       const rankRows = parseSheet(wb, 'RANKING');
-      console.log('Aba RANKING:', rankRows ? `${rankRows.length} linhas` : 'NÃO ENCONTRADA');
       const { ranking, relatorio } = parseRanking(rankRows);
-      data.ranking = ranking;
+      console.log('Ranking:', ranking);
+      console.log('Relatorio:', relatorio);
+
+      data.ranking  = ranking;
       data.relatorio = relatorio;
       data.meta = { geradoEm: new Date().toISOString() };
 
-      const json = JSON.stringify(data);
-
-      await put('ebd-data.json', json, {
+      await put('ebd-data.json', JSON.stringify(data), {
         access: 'public',
         contentType: 'application/json',
         addRandomSuffix: false,
@@ -164,7 +201,12 @@ export default async function handler(req, res) {
         allowOverwrite: true,
       });
 
-      return res.status(200).json({ ok: true, abas: Object.keys(data) });
+      return res.status(200).json({
+        ok: true,
+        salas: Object.keys(data).filter(k => !['ranking','relatorio','meta'].includes(k)),
+        ranking: data.ranking.length,
+        relatorio: data.relatorio.length,
+      });
     } catch (e) {
       console.error(e);
       return res.status(500).json({ error: 'Erro ao processar planilha: ' + e.message });
