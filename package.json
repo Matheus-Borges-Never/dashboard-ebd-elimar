@@ -1,0 +1,10 @@
+{
+  "name": "ebd-recanto-elimar",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@vercel/blob": "^0.23.4",
+    "formidable": "^3.5.1",
+    "xlsx": "^0.18.5"
+  }
+}
