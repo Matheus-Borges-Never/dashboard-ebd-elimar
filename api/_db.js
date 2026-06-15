@@ -10,7 +10,12 @@ export async function readDB(token) {
   const blob = blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
   // Cache-busting param prevents Vercel CDN from serving stale data after overwrites
   const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: 'no-store' });
-  return res.json();
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Blob retornou conteúdo inválido (status ${res.status}): ${text.slice(0, 200)}`);
+  }
 }
 
 export async function writeDB(token, data) {
