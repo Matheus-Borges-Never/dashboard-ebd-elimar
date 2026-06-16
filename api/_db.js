@@ -36,7 +36,7 @@ export async function readDB() {
 export async function upsert(table, rows, onConflict = 'id') {
   if (!rows || !rows.length) return;
   return sb(`${table}?on_conflict=${onConflict}`, 'POST', rows, {
-    Prefer: 'resolution=merge-duplicates',
+    Prefer: 'resolution=merge-duplicates,return=minimal',
   });
 }
 
