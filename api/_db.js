@@ -40,6 +40,11 @@ export async function upsert(table, rows, onConflict = 'id') {
   });
 }
 
+export async function insert(table, rows) {
+  if (!rows || !rows.length) return;
+  return sb(table, 'POST', rows, { Prefer: 'return=minimal' });
+}
+
 export async function patch(table, filter, data) {
   return sb(`${table}?${filter}`, 'PATCH', data);
 }

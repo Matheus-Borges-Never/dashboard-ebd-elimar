@@ -1,4 +1,4 @@
-import { readDB, upsert, patch, del, uid } from './_db.js';
+import { readDB, upsert, insert, patch, del, uid } from './_db.js';
 
 const SENHA = process.env.ADMIN_SENHA || '0705';
 
@@ -112,11 +112,15 @@ export default async function handler(req, res) {
       const { presencas } = body;
       if (!Array.isArray(presencas)) return res.status(400).json({ error: 'presencas deve ser um array.' });
       if (presencas.length > 0) {
-        await upsert('presencas', presencas.map(p => ({
+        const date = presencas[0].data;
+        const alunoIds = presencas.map(p => p.aluno_id).join(',');
+        // Apaga registros existentes para essa data+alunos, depois insere tudo de novo
+        await del('presencas', `data=eq.${date}&aluno_id=in.(${alunoIds})`);
+        await insert('presencas', presencas.map(p => ({
           aluno_id: p.aluno_id,
           data: p.data,
           presente: !!p.presente,
-        })), 'aluno_id,data');
+        })));
       }
       return res.status(200).json({ ok: true });
     }
