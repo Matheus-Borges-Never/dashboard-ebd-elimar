@@ -65,19 +65,22 @@ function computeFromDB(db) {
     };
 
     const isProfessores = /professor|coordena/i.test(sala.nome);
+    const media_por_aula = parseFloat((alunos.length * freq_pct / 100).toFixed(1));
+    const ultimo_domingo = totais_por_aula[totais_por_aula.length - 1] ?? 0;
+
     if (!isProfessores) {
-      ranking.push({ sala: sala.nome, freq: freq_pct });
-      relatorio.push({
-        sala: sala.nome,
-        alunos_ref: alunos.length,
-        freq_pct,
-        ultimo_domingo: totais_por_aula[totais_por_aula.length - 1] ?? 0,
-      });
+      ranking.push({ sala: sala.nome, freq: freq_pct, alunos_ref: alunos.length, media_por_aula });
+      relatorio.push({ sala: sala.nome, alunos_ref: alunos.length, freq_pct, ultimo_domingo, media_por_aula });
+    } else {
+      result.__corpDocente = freq_pct;
     }
   }
 
   ranking.sort((a, b) => b.freq - a.freq);
   ranking.forEach((r, i) => { r.pos = `${i + 1}º`; });
+
+  const lastSunday = sundays[sundays.length - 1];
+  const totalPresentesUltimoDom = relatorio.reduce((s, r) => s + r.ultimo_domingo, 0);
 
   return {
     ...result,
@@ -88,6 +91,9 @@ function computeFromDB(db) {
       trimestre: trimestre.nome,
       totalDomingos: allSundays.length,
       domingosPassed: sundays.length,
+      ultimoDomingo: lastSunday ? fmtDate(lastSunday) : null,
+      totalPresentesUltimoDom,
+      corpDocente: result.__corpDocente ?? null,
     },
   };
 }

@@ -84,7 +84,7 @@ export default function AdminLayout() {
               />
               {loginError && <p className="text-red-600 text-xs mt-1.5">{loginError}</p>}
             </div>
-            <Button onClick={login} disabled={loading} className="w-full">
+            <Button onClick={() => login()} disabled={loading} className="w-full">
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </div>
