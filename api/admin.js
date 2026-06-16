@@ -3,6 +3,10 @@ import { readDB, upsert, insert, patch, del, uid } from './_db.js';
 const SENHA = process.env.ADMIN_SENHA || '0705';
 
 function parseBody(req) {
+  // Vercel may auto-parse the body and expose it via req.body
+  if (req.body !== undefined) {
+    return Promise.resolve(typeof req.body === 'string' ? JSON.parse(req.body) : req.body);
+  }
   return new Promise((resolve, reject) => {
     let raw = '';
     req.on('data', chunk => (raw += chunk));
