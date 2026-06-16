@@ -2,9 +2,30 @@
   "name": "ebd-recanto-elimar",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.0",
     "@vercel/blob": "^0.23.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "formidable": "^3.5.1",
+    "lucide-react": "^1.18.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.17.0",
+    "recharts": "^3.8.1",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.1",
+    "@vitejs/plugin-react": "^6.0.2",
+    "tailwindcss": "^4.3.1",
+    "vite": "^8.0.16",
     "xlsx": "^0.18.5"
   }
 }
