@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { adminApi } from '@/lib/api'
 import { Toaster, useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -31,13 +31,14 @@ export default function AdminLayout() {
     return res
   }, [senha])
 
-  async function login() {
+  async function login(s) {
+    const s_ = s ?? senhaInput
     setLoading(true)
     setLoginError('')
     try {
-      const res = await adminApi('load', {}, senhaInput)
-      sessionStorage.setItem('ebd_admin_senha', senhaInput)
-      setSenha(senhaInput)
+      const res = await adminApi('load', {}, s_)
+      sessionStorage.setItem('ebd_admin_senha', s_)
+      setSenha(s_)
       setDb(res)
     } catch (e) {
       setLoginError(e.message)
@@ -45,6 +46,12 @@ export default function AdminLayout() {
       setLoading(false)
     }
   }
+
+  // Auto-login se senha já estiver salva
+  useEffect(() => {
+    const saved = sessionStorage.getItem('ebd_admin_senha')
+    if (saved) login(saved)
+  }, [])
 
   function logout() {
     sessionStorage.removeItem('ebd_admin_senha')
