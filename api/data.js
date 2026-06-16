@@ -1,12 +1,4 @@
-import { list } from '@vercel/blob';
-
-async function fetchBlob(token, key) {
-  const { blobs } = await list({ prefix: key, token });
-  if (!blobs || blobs.length === 0) return null;
-  const blob = blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
-  const res = await fetch(blob.url);
-  return res.json();
-}
+import { readDB } from './_db.js';
 
 function getSundays(inicio, fim) {
   const sundays = [];
@@ -44,14 +36,11 @@ function computeFromDB(db) {
     const alunos = (db.alunos || []).filter(a => a.sala_id === sala.id);
     const alunoIds = new Set(alunos.map(a => a.id));
 
-    // Aulas realizadas = domingos passados que têm ao menos 1 registro de presença
-    // Usado APENAS no denominador da freq% — a exibição mostra todos os domingos passados
     const recordedDates = new Set(
       presencas.filter(p => alunoIds.has(p.aluno_id) && sundays.includes(p.data)).map(p => p.data)
     );
     const aulasRealizadas = sundays.filter(d => recordedDates.has(d)).length;
 
-    // Todos os domingos passados aparecem no relatório (0 para os sem chamada feita)
     const alunosData = alunos.map(aluno => {
       const pArr = sundays.map(d => {
         const p = presencas.find(x => x.aluno_id === aluno.id && x.data === d);
@@ -64,7 +53,6 @@ function computeFromDB(db) {
       alunosData.reduce((sum, a) => sum + a.presencas[i], 0)
     );
 
-    // freq % = presenças efetivas / (alunos × aulas com chamada realizada)
     const total = alunosData.reduce((s, a) => s + a.pts, 0);
     const max = alunos.length * aulasRealizadas;
     const freq_pct = max > 0 ? Math.round((total / max) * 10000) / 100 : 0;
@@ -76,7 +64,6 @@ function computeFromDB(db) {
       freq_pct,
     };
 
-    // Professores/coordenação ficam fora do ranking (igual à planilha)
     const isProfessores = /professor|coordena/i.test(sala.nome);
     if (!isProfessores) {
       ranking.push({ sala: sala.nome, freq: freq_pct });
@@ -106,25 +93,20 @@ function computeFromDB(db) {
 }
 
 export default async function handler(req, res) {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN não configurado.' });
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    return res.status(500).json({ error: 'Variáveis SUPABASE_URL e SUPABASE_SERVICE_KEY não configuradas.' });
+  }
 
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   try {
-    // New structured DB
-    const db = await fetchBlob(token, 'ebd-db.json');
-    if (db && db.trimestres && db.trimestres.length > 0) {
+    const db = await readDB();
+    if (db.trimestres.length > 0) {
       const computed = computeFromDB(db);
       if (computed) return res.status(200).json(computed);
     }
-
-    // Fallback: legacy spreadsheet upload
-    const legacy = await fetchBlob(token, 'ebd-data.json');
-    if (legacy) return res.status(200).json(legacy);
-
-    return res.status(404).json({ error: 'Nenhuma planilha carregada ainda.' });
+    return res.status(404).json({ error: 'Nenhum trimestre cadastrado ainda.' });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Erro ao buscar dados: ' + e.message });

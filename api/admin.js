@@ -1,4 +1,4 @@
-import { readDB, writeDB, uid } from './_db.js';
+import { readDB, upsert, patch, del, uid } from './_db.js';
 
 const SENHA = process.env.ADMIN_SENHA || '0705';
 
@@ -20,8 +20,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN não configurado.' });
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    return res.status(500).json({ error: 'Variáveis SUPABASE_URL e SUPABASE_SERVICE_KEY não configuradas.' });
+  }
 
   let body;
   try { body = await parseBody(req); } catch { return res.status(400).json({ error: 'JSON inválido.' }); }
@@ -31,10 +32,9 @@ export default async function handler(req, res) {
   const { action } = body;
 
   try {
-    const db = await readDB(token);
-
     // ── LOAD ──
     if (action === 'load') {
+      const db = await readDB();
       return res.status(200).json(db);
     }
 
@@ -43,37 +43,35 @@ export default async function handler(req, res) {
       const { id, nome, inicio, fim } = body;
       if (!nome || !inicio || !fim) return res.status(400).json({ error: 'Campos obrigatórios: nome, inicio, fim.' });
       if (id) {
-        const idx = db.trimestres.findIndex(t => t.id === id);
-        if (idx < 0) return res.status(404).json({ error: 'Trimestre não encontrado.' });
-        db.trimestres[idx] = { ...db.trimestres[idx], nome, inicio, fim };
+        await upsert('trimestres', [{ id, nome, inicio, fim }]);
       } else {
+        const db = await readDB();
         const isFirst = db.trimestres.length === 0;
-        db.trimestres.push({ id: uid(), nome, inicio, fim, ativo: isFirst });
+        await upsert('trimestres', [{ id: uid(), nome, inicio, fim, ativo: isFirst }]);
       }
-      await writeDB(token, db);
+      const db = await readDB();
       return res.status(200).json({ ok: true, db });
     }
 
     if (action === 'setTrimestreAtivo') {
       const { id } = body;
-      db.trimestres.forEach(t => { t.ativo = t.id === id; });
-      await writeDB(token, db);
+      await patch('trimestres', 'id=neq.' + id, { ativo: false });
+      await patch('trimestres', 'id=eq.' + id, { ativo: true });
+      const db = await readDB();
       return res.status(200).json({ ok: true, db });
     }
 
     if (action === 'deleteTrimestre') {
       const { id } = body;
-      const salaIds = db.salas.filter(s => s.trimestre_id === id).map(s => s.id);
-      const alunoIds = db.alunos.filter(a => salaIds.includes(a.sala_id)).map(a => a.id);
-      db.trimestres = db.trimestres.filter(t => t.id !== id);
-      db.salas = db.salas.filter(s => !salaIds.includes(s.id));
-      db.alunos = db.alunos.filter(a => !alunoIds.includes(a.id));
-      db.presencas = (db.presencas || []).filter(p => !alunoIds.includes(p.aluno_id));
-      // If deleted trimestre was active, activate the last remaining one
-      if (!db.trimestres.some(t => t.ativo) && db.trimestres.length > 0) {
-        db.trimestres[db.trimestres.length - 1].ativo = true;
+      await del('trimestres', 'id=eq.' + id);
+      // Cascade handles salas, alunos, presencas
+      // Activate last trimestre if none active
+      const db = await readDB();
+      if (db.trimestres.length > 0 && !db.trimestres.some(t => t.ativo)) {
+        const last = db.trimestres[db.trimestres.length - 1];
+        await patch('trimestres', 'id=eq.' + last.id, { ativo: true });
+        return res.status(200).json({ ok: true, db: await readDB() });
       }
-      await writeDB(token, db);
       return res.status(200).json({ ok: true, db });
     }
 
@@ -81,24 +79,15 @@ export default async function handler(req, res) {
     if (action === 'saveSala') {
       const { id, nome, trimestre_id } = body;
       if (!nome || !trimestre_id) return res.status(400).json({ error: 'Campos obrigatórios: nome, trimestre_id.' });
-      if (id) {
-        const idx = db.salas.findIndex(s => s.id === id);
-        if (idx < 0) return res.status(404).json({ error: 'Sala não encontrada.' });
-        db.salas[idx] = { ...db.salas[idx], nome, trimestre_id };
-      } else {
-        db.salas.push({ id: uid(), nome, trimestre_id });
-      }
-      await writeDB(token, db);
+      await upsert('salas', [{ id: id || uid(), nome, trimestre_id }]);
+      const db = await readDB();
       return res.status(200).json({ ok: true, db });
     }
 
     if (action === 'deleteSala') {
       const { id } = body;
-      const alunoIds = db.alunos.filter(a => a.sala_id === id).map(a => a.id);
-      db.salas = db.salas.filter(s => s.id !== id);
-      db.alunos = db.alunos.filter(a => a.sala_id !== id);
-      db.presencas = (db.presencas || []).filter(p => !alunoIds.includes(p.aluno_id));
-      await writeDB(token, db);
+      await del('salas', 'id=eq.' + id);
+      const db = await readDB();
       return res.status(200).json({ ok: true, db });
     }
 
@@ -106,37 +95,29 @@ export default async function handler(req, res) {
     if (action === 'saveAluno') {
       const { id, nome, sala_id } = body;
       if (!nome || !sala_id) return res.status(400).json({ error: 'Campos obrigatórios: nome, sala_id.' });
-      if (id) {
-        const idx = db.alunos.findIndex(a => a.id === id);
-        if (idx < 0) return res.status(404).json({ error: 'Aluno não encontrado.' });
-        db.alunos[idx] = { ...db.alunos[idx], nome, sala_id };
-      } else {
-        db.alunos.push({ id: uid(), nome, sala_id });
-      }
-      await writeDB(token, db);
+      await upsert('alunos', [{ id: id || uid(), nome, sala_id }]);
+      const db = await readDB();
       return res.status(200).json({ ok: true, db });
     }
 
     if (action === 'deleteAluno') {
       const { id } = body;
-      db.alunos = db.alunos.filter(a => a.id !== id);
-      db.presencas = (db.presencas || []).filter(p => p.aluno_id !== id);
-      await writeDB(token, db);
+      await del('alunos', 'id=eq.' + id);
+      const db = await readDB();
       return res.status(200).json({ ok: true, db });
     }
 
     // ── PRESENÇAS ──
     if (action === 'savePresencaLote') {
-      const { presencas } = body; // [{ aluno_id, data, presente }]
+      const { presencas } = body;
       if (!Array.isArray(presencas)) return res.status(400).json({ error: 'presencas deve ser um array.' });
-      db.presencas = db.presencas || [];
-      for (const p of presencas) {
-        const idx = db.presencas.findIndex(x => x.aluno_id === p.aluno_id && x.data === p.data);
-        if (idx >= 0) db.presencas[idx].presente = !!p.presente;
-        else db.presencas.push({ aluno_id: p.aluno_id, data: p.data, presente: !!p.presente });
+      if (presencas.length > 0) {
+        await upsert('presencas', presencas.map(p => ({
+          aluno_id: p.aluno_id,
+          data: p.data,
+          presente: !!p.presente,
+        })), 'aluno_id,data');
       }
-      await writeDB(token, db);
-      // Não retorna db para evitar sobrescrever alunos criados recentemente no frontend
       return res.status(200).json({ ok: true });
     }
 
@@ -146,7 +127,13 @@ export default async function handler(req, res) {
       if (!importDb || !Array.isArray(importDb.trimestres)) {
         return res.status(400).json({ error: 'db inválido.' });
       }
-      await writeDB(token, importDb);
+      // Delete all existing data (cascade from trimestres)
+      await del('trimestres', 'id=is.not.null');
+      // Insert in FK order
+      if (importDb.trimestres.length) await upsert('trimestres', importDb.trimestres);
+      if (importDb.salas?.length) await upsert('salas', importDb.salas);
+      if (importDb.alunos?.length) await upsert('alunos', importDb.alunos);
+      if (importDb.presencas?.length) await upsert('presencas', importDb.presencas, 'aluno_id,data');
       return res.status(200).json({ ok: true });
     }
 

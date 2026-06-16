@@ -1,33 +1,51 @@
-import { list, put } from '@vercel/blob';
+const SB_URL = () => process.env.SUPABASE_URL;
+const SB_KEY = () => process.env.SUPABASE_SERVICE_KEY;
 
-const KEY = 'ebd-db.json';
-
-export async function readDB(token) {
-  const { blobs } = await list({ prefix: KEY, token });
-  if (!blobs || blobs.length === 0) {
-    return { trimestres: [], salas: [], alunos: [], presencas: [] };
-  }
-  const blob = blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
-  // Cache-busting param prevents Vercel CDN from serving stale data after overwrites
-  const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: 'no-store' });
+async function sb(path, method = 'GET', body = null, extraHeaders = {}) {
+  const opts = {
+    method,
+    headers: {
+      apikey: SB_KEY(),
+      Authorization: `Bearer ${SB_KEY()}`,
+      'Content-Type': 'application/json',
+      ...extraHeaders,
+    },
+  };
+  if (body !== null) opts.body = JSON.stringify(body);
+  const res = await fetch(`${SB_URL()}/rest/v1/${path}`, opts);
   const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(`Blob retornou conteúdo inválido (status ${res.status}): ${text.slice(0, 200)}`);
-  }
+  if (!res.ok) throw new Error(`Supabase ${res.status}: ${text.slice(0, 300)}`);
+  return text ? JSON.parse(text) : null;
 }
 
-export async function writeDB(token, data) {
-  data.meta = { atualizadoEm: new Date().toISOString() };
-  await put(KEY, JSON.stringify(data), {
-    access: 'public',
-    contentType: 'application/json',
-    addRandomSuffix: false,
-    token,
-    allowOverwrite: true,
-    cacheControlMaxAge: 0,   // sem cache CDN — dashboard sempre recebe dado fresco
+export async function readDB() {
+  const [trimestres, salas, alunos, presencas] = await Promise.all([
+    sb('trimestres?select=*'),
+    sb('salas?select=*'),
+    sb('alunos?select=*'),
+    sb('presencas?select=*'),
+  ]);
+  return {
+    trimestres: trimestres || [],
+    salas: salas || [],
+    alunos: alunos || [],
+    presencas: presencas || [],
+  };
+}
+
+export async function upsert(table, rows, onConflict = 'id') {
+  if (!rows || !rows.length) return;
+  return sb(`${table}?on_conflict=${onConflict}`, 'POST', rows, {
+    Prefer: 'resolution=merge-duplicates',
   });
+}
+
+export async function patch(table, filter, data) {
+  return sb(`${table}?${filter}`, 'PATCH', data);
+}
+
+export async function del(table, filter) {
+  return sb(`${table}?${filter}`, 'DELETE');
 }
 
 export function uid() {
