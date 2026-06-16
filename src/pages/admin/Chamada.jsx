@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Save, CheckSquare, Square } from 'lucide-react'
+import { Save, CheckSquare, Square, CheckCircle, Circle, Users } from 'lucide-react'
 
 function getSundays(inicio, fim) {
   const sundays = []
@@ -42,6 +42,22 @@ export default function Chamada({ db, api, toast }) {
     [db.alunos, salaId]
   )
 
+  // Estatísticas por data (para a lista de domingos)
+  const statsPorData = useMemo(() => {
+    if (!salaId) return {}
+    const alunoIds = new Set(alunos.map(a => a.id))
+    const stats = {}
+    sundays.forEach(d => {
+      const registros = (db.presencas || []).filter(p => alunoIds.has(p.aluno_id) && p.data === d)
+      stats[d] = {
+        registrada: registros.length > 0,
+        presentes: registros.filter(p => p.presente).length,
+      }
+    })
+    return stats
+  }, [salaId, alunos, sundays, db.presencas])
+
+  // Carrega presenças ao trocar de data/sala
   useEffect(() => {
     if (!salaId || !data) return
     const map = {}
@@ -84,83 +100,119 @@ export default function Chamada({ db, api, toast }) {
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold text-gray-900">Chamada</h2>
 
-      <Card>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-4">
-          <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Trimestre</label>
-            <Select value={triId} onChange={e => { setTriId(e.target.value); setSalaId(''); setData('') }}>
-              {(db.trimestres || []).map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Sala</label>
-            <Select value={salaId} onChange={e => { setSalaId(e.target.value); setData('') }}>
-              <option value="">— Selecione —</option>
-              {salas.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Domingo</label>
-            <Select value={data} onChange={e => setData(e.target.value)} disabled={!salaId}>
-              <option value="">— Selecione —</option>
-              {sundays.map(s => <option key={s} value={s}>{fmtDate(s)}</option>)}
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filtros */}
+      <div className="flex gap-3 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-600">Trimestre</label>
+          <Select value={triId} onChange={e => { setTriId(e.target.value); setSalaId(''); setData('') }} className="min-w-48">
+            {(db.trimestres || []).map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-600">Sala</label>
+          <Select value={salaId} onChange={e => { setSalaId(e.target.value); setData('') }} className="min-w-48">
+            <option value="">— Selecione —</option>
+            {salas.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+          </Select>
+        </div>
+      </div>
 
-      {salaId && data && alunos.length > 0 && (
-        <>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">
-                <span className="font-semibold text-gray-900">{totalPresentes}</span> / {alunos.length} presentes
-              </span>
-              <Badge variant={totalPresentes === alunos.length ? 'success' : 'secondary'}>
-                {alunos.length > 0 ? Math.round((totalPresentes / alunos.length) * 100) : 0}%
-              </Badge>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => marcarTodos(true)}>
-                <CheckSquare size={14} /> Todos
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => marcarTodos(false)}>
-                <Square size={14} /> Nenhum
-              </Button>
-            </div>
-          </div>
+      {salaId && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {alunos.map(a => {
-              const presente = presencas[a.id] || false
+          {/* Lista de domingos */}
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Aulas</p>
+            {sundays.map(s => {
+              const stats = statsPorData[s] || { registrada: false, presentes: 0 }
+              const selected = data === s
               return (
                 <button
-                  key={a.id}
-                  onClick={() => toggle(a.id)}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${
-                    presente
-                      ? 'border-green-400 bg-green-50 text-green-800'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                  key={s}
+                  onClick={() => setData(s)}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg border text-left transition-all ${
+                    selected
+                      ? 'border-blue-500 bg-blue-50 text-blue-800'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  <span className="font-medium text-sm">{a.nome}</span>
-                  <span className={`text-xs font-semibold ${presente ? 'text-green-600' : 'text-gray-400'}`}>
-                    {presente ? 'PRESENTE' : 'AUSENTE'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {stats.registrada
+                      ? <CheckCircle size={15} className="text-green-500 shrink-0" />
+                      : <Circle size={15} className="text-gray-300 shrink-0" />
+                    }
+                    <span className="text-sm font-medium">{fmtDate(s)}</span>
+                  </div>
+                  {stats.registrada && (
+                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <Users size={12} />
+                      {stats.presentes}
+                    </span>
+                  )}
                 </button>
               )
             })}
           </div>
 
-          <Button onClick={salvar} disabled={saving} className="w-full sm:w-fit">
-            <Save size={15} />
-            {saving ? 'Salvando...' : 'Salvar Chamada'}
-          </Button>
-        </>
-      )}
+          {/* Lista de alunos */}
+          {data && alunos.length > 0 && (
+            <div className="lg:col-span-2 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
+                    <span className="font-semibold text-gray-900">{totalPresentes}</span> / {alunos.length} presentes
+                  </span>
+                  <Badge variant={totalPresentes === alunos.length ? 'success' : 'secondary'}>
+                    {alunos.length > 0 ? Math.round((totalPresentes / alunos.length) * 100) : 0}%
+                  </Badge>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => marcarTodos(true)}>
+                    <CheckSquare size={14} /> Todos
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => marcarTodos(false)}>
+                    <Square size={14} /> Nenhum
+                  </Button>
+                </div>
+              </div>
 
-      {salaId && data && alunos.length === 0 && (
-        <p className="text-sm text-gray-500">Nenhum aluno nesta sala.</p>
+              <div className="flex flex-col gap-2">
+                {alunos.map(a => {
+                  const presente = presencas[a.id] || false
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => toggle(a.id)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                        presente
+                          ? 'border-green-400 bg-green-50 text-green-800'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className="font-medium text-sm">{a.nome}</span>
+                      <span className={`text-xs font-semibold ${presente ? 'text-green-600' : 'text-gray-400'}`}>
+                        {presente ? 'PRESENTE' : 'AUSENTE'}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <Button onClick={salvar} disabled={saving} className="w-full sm:w-fit">
+                <Save size={15} />
+                {saving ? 'Salvando...' : 'Salvar Chamada'}
+              </Button>
+            </div>
+          )}
+
+          {data && alunos.length === 0 && (
+            <p className="text-sm text-gray-500 lg:col-span-2">Nenhum aluno nesta sala.</p>
+          )}
+
+          {!data && (
+            <p className="text-sm text-gray-400 lg:col-span-2 pt-2">← Selecione uma aula para fazer a chamada.</p>
+          )}
+        </div>
       )}
     </div>
   )
