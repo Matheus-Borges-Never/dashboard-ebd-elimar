@@ -11,8 +11,7 @@ const API_URL = (process.env.API_URL || 'https://dashboard-ebd-elimar.vercel.app
 const SENHA = process.env.SENHA || '0705';
 const FILE = process.argv[2] || 'C:\\Users\\mathe\\Downloads\\MARATONA ELIMAR 2\xBA TRI-26.xlsx';
 
-let _seq = 1;
-function uid() { return 'id' + (_seq++); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 function xlDateToISO(serial) {
   if (typeof serial !== 'number' || serial < 40000) return null;
