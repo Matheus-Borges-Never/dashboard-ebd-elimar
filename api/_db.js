@@ -23,7 +23,7 @@ export async function readDB() {
     sb('trimestres?select=*'),
     sb('salas?select=*'),
     sb('alunos?select=*'),
-    sb('presencas?select=*'),
+    sb('presencas?select=*&limit=50000'),
   ]);
   return {
     trimestres: trimestres || [],
