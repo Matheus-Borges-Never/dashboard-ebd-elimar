@@ -682,11 +682,9 @@ async function salvarChamada() {
   }));
 
   try {
-    await api('savePresencaLote', { presencas });
-    // Recarrega DB do Supabase para confirmar o que foi persistido
-    await api('load', {});
+    const r = await api('savePresencaLote', { presencas });
     const total = presencas.filter(p => p.presente).length;
-    toast(`✓ Chamada salva! ${total} de ${alunos.length} presentes.`);
+    toast(`✓ Chamada salva! ${total} de ${alunos.length} presentes. (${r.saved ?? total} gravados)`);
     renderChamada();
     try { new BroadcastChannel('ebd-updates').postMessage('refresh'); } catch {}
   } catch (e) {

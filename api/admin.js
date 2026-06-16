@@ -112,17 +112,18 @@ export default async function handler(req, res) {
       const { presencas } = body;
       if (!Array.isArray(presencas)) return res.status(400).json({ error: 'presencas deve ser um array.' });
       if (presencas.length > 0) {
-        const date = presencas[0].data;
-        const alunoIds = presencas.map(p => p.aluno_id).join(',');
-        // Apaga registros existentes para essa data+alunos, depois insere tudo de novo
-        await del('presencas', `data=eq.${date}&aluno_id=in.(${alunoIds})`);
-        await insert('presencas', presencas.map(p => ({
+        const rows = presencas.map(p => ({
           aluno_id: p.aluno_id,
           data: p.data,
           presente: !!p.presente,
-        })));
+        }));
+        const date = rows[0].data;
+        const ids = rows.map(p => p.aluno_id).join(',');
+        await del('presencas', `data=eq.${date}&aluno_id=in.(${ids})`);
+        const saved = await insert('presencas', rows);
+        return res.status(200).json({ ok: true, saved: Array.isArray(saved) ? saved.length : rows.length });
       }
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true, saved: 0 });
     }
 
     // ── BULK IMPORT ──
