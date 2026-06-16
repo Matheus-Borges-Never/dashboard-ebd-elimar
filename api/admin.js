@@ -128,7 +128,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'db inválido.' });
       }
       // Delete all existing data (cascade from trimestres)
-      await del('trimestres', 'id=is.not.null');
+      await del('trimestres', 'id=not.is.null');
       // Insert in FK order
       if (importDb.trimestres.length) await upsert('trimestres', importDb.trimestres);
       if (importDb.salas?.length) await upsert('salas', importDb.salas);
