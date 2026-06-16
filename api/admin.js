@@ -121,9 +121,9 @@ export default async function handler(req, res) {
           data: p.data,
           presente: !!p.presente,
         }));
-        const date = rows[0].data;
-        const ids = rows.map(p => p.aluno_id).join(',');
-        await del('presencas', `data=eq.${date}&aluno_id=in.(${ids})`);
+        const ids = [...new Set(rows.map(p => p.aluno_id))].join(',');
+        const dates = [...new Set(rows.map(p => p.data))].join(',');
+        await del('presencas', `aluno_id=in.(${ids})&data=in.(${dates})`);
         const saved = await insert('presencas', rows);
         return res.status(200).json({ ok: true, saved: Array.isArray(saved) ? saved.length : rows.length });
       }
