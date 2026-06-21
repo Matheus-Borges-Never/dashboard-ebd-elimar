@@ -18,12 +18,26 @@ async function sb(path, method = 'GET', body = null, extraHeaders = {}) {
   return text ? JSON.parse(text) : null;
 }
 
+async function fetchAllPresencas() {
+  const PAGE = 1000;
+  const all = [];
+  let offset = 0;
+  while (true) {
+    const page = await sb(`presencas?select=*&limit=${PAGE}&offset=${offset}`);
+    if (!page || page.length === 0) break;
+    all.push(...page);
+    if (page.length < PAGE) break;
+    offset += PAGE;
+  }
+  return all;
+}
+
 export async function readDB() {
   const [trimestres, salas, alunos, presencas] = await Promise.all([
     sb('trimestres?select=*'),
     sb('salas?select=*'),
     sb('alunos?select=*'),
-    sb('presencas?select=*&limit=50000'),
+    fetchAllPresencas(),
   ]);
   return {
     trimestres: trimestres || [],
