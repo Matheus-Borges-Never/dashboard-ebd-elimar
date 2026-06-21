@@ -348,7 +348,7 @@ export default function Dashboard() {
                       <XAxis dataKey="data" tick={{ fontSize: 11, fill: '#9ca3af' }} />
                       <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
                       <Tooltip formatter={v => [`${v} presentes`, 'Total']} />
-                      <Bar dataKey="total" radius={[6, 6, 0, 0]} label={{ position: 'inside', fill: '#fff', fontSize: 12, fontWeight: 700 }}>
+                      <Bar dataKey="total" radius={[6, 6, 0, 0]} isAnimationActive={false} label={{ position: 'inside', fill: '#fff', fontSize: 12, fontWeight: 700 }}>
                         {chartData.map((entry, i) => {
                           const maxTotal = Math.max(...chartData.map(d => d.total))
                           return <Cell key={i} fill={entry.total === maxTotal ? '#f59e0b' : '#7c6fcd'} />
