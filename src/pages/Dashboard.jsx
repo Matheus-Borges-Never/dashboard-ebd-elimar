@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchData } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,8 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, Cell,
 } from 'recharts'
-import { Users, BookOpen, TrendingUp, RefreshCw, Calendar } from 'lucide-react'
+import { Users, BookOpen, TrendingUp, RefreshCw, Calendar, Tv } from 'lucide-react'
+import PresentationMode from './PresentationMode.jsx'
 
 const SALA_COLORS = ['#7c6fcd', '#c9a84c', '#e07b8a', '#6baed6', '#6dbf9c', '#e0936a']
 const TABS = ['Visão Geral', 'Por Sala', 'Evolução', 'Ranking']
@@ -22,6 +23,7 @@ function Card({ children, className = '' }) {
 
 export default function Dashboard() {
   const [tab, setTab] = useState(0)
+  const [presenting, setPresenting] = useState(false)
   const queryClient = useQueryClient()
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -100,6 +102,21 @@ export default function Dashboard() {
     })
   })()
 
+  if (presenting) {
+    return (
+      <PresentationMode
+        data={data}
+        meta={meta}
+        relatorio={relatorio}
+        ranking={ranking}
+        salasNaoProf={salasNaoProf}
+        todasSalas={todasSalas}
+        barDataComProf={barDataComProf}
+        onExit={() => setPresenting(false)}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -115,6 +132,9 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-400 hidden sm:block">{meta.domingosPassed ?? 0}/{meta.totalDomingos ?? 13} aulas</span>
             <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCw size={14} /></Button>
+            <Button size="sm" onClick={() => setPresenting(true)} className="gap-1.5 bg-slate-800 hover:bg-slate-700 text-white border-0">
+              <Tv size={14} /> Apresentar
+            </Button>
             <a href="/admin" className="text-xs text-blue-600 hover:underline">Admin</a>
           </div>
         </div>
