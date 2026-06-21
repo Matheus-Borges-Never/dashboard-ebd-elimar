@@ -256,27 +256,79 @@ export default function Dashboard() {
         {/* ── EVOLUÇÃO ── */}
         {tab === 2 && (
           <div className="flex flex-col gap-5">
-            <Card className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase">Presença por Sala — Aula a Aula</p>
-                <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCw size={14} /></Button>
-              </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={lineData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="aula" tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                  <Tooltip />
-                  <Legend />
-                  {salasNaoProf.map(([nome], i) => (
-                    <Line key={nome} type="monotone" dataKey={nome} stroke={SALA_COLORS[i % SALA_COLORS.length]} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                  ))}
-                  {profNome && (
-                    <Line type="monotone" dataKey={profNome} stroke="#64748b" strokeWidth={2} strokeDasharray="5 3" dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
-            </Card>
+            {/* Tabela numérica presença por sala */}
+            {(() => {
+              const refSala = todasSalas[0]?.[1]
+              const datas = Array.isArray(refSala?.datas) ? refSala.datas : []
+              if (!datas.length) return null
+              const totalGeral = datas.map((_, di) =>
+                todasSalas.reduce((s, [, sala]) => s + (Array.isArray(sala?.totais_por_aula) ? (sala.totais_por_aula[di] || 0) : 0), 0)
+              )
+              const totalGeralSum = totalGeral.reduce((a, b) => a + b, 0)
+              return (
+                <Card className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase">Presença por Sala — Aula a Aula</p>
+                    <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCw size={14} /></Button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left py-2 pr-4 text-gray-400 font-semibold uppercase min-w-32">Sala</th>
+                          {datas.map((d, i) => (
+                            <th key={d} className="text-center px-2 py-1 text-gray-400 font-semibold min-w-12">
+                              <div>{d}</div>
+                              <div className="text-gray-300 font-normal">Aula {i + 1}</div>
+                            </th>
+                          ))}
+                          <th className="text-center px-2 py-2 text-gray-400 font-semibold uppercase">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {todasSalas.map(([nome, s], si) => {
+                          const totais = Array.isArray(s?.totais_por_aula) ? s.totais_por_aula : []
+                          const maxVal = totais.length ? Math.max(...totais) : 0
+                          const sum = totais.reduce((a, b) => a + b, 0)
+                          const isProf = /professor|coordena/i.test(nome)
+                          return (
+                            <tr key={nome} className={`border-b border-gray-50 ${isProf ? 'bg-slate-50' : ''}`}>
+                              <td className="py-3 pr-4 font-semibold uppercase">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: isProf ? '#64748b' : SALA_COLORS[si % SALA_COLORS.length] }} />
+                                  <span className={isProf ? 'text-slate-500' : 'text-gray-700'}>{nome}</span>
+                                </div>
+                              </td>
+                              {datas.map((_, di) => {
+                                const val = totais[di] ?? 0
+                                const isMax = val === maxVal && maxVal > 0
+                                return (
+                                  <td key={di} className={`text-center px-2 py-3 font-bold ${isMax ? 'text-amber-500' : isProf ? 'text-slate-500' : 'text-gray-600'}`}>
+                                    {val || <span className="text-gray-200">–</span>}
+                                  </td>
+                                )
+                              })}
+                              <td className={`text-center px-2 py-3 font-bold ${isProf ? 'text-slate-600' : 'text-gray-800'}`}>{sum}</td>
+                            </tr>
+                          )
+                        })}
+                        <tr className="border-t-2 border-gray-200 bg-gray-50">
+                          <td className="py-3 pr-4 text-gray-500 font-semibold uppercase">Total Geral</td>
+                          {totalGeral.map((t, i) => {
+                            const maxTG = Math.max(...totalGeral)
+                            return (
+                              <td key={i} className={`text-center px-2 py-3 font-bold ${t === maxTG && maxTG > 0 ? 'text-amber-500' : 'text-gray-600'}`}>{t}</td>
+                            )
+                          })}
+                          <td className="text-center px-2 py-3 font-bold text-gray-800">{totalGeralSum}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-[10px] text-gray-300 mt-3 italic">✦ Valores em dourado indicam o maior número de presentes daquela sala ao longo das aulas.</p>
+                </Card>
+              )
+            })()}
 
             {todasSalas.map(([nome, s]) => {
               const isProf = /professor|coordena/i.test(nome)
