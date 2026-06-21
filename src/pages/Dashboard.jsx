@@ -330,55 +330,35 @@ export default function Dashboard() {
               )
             })()}
 
-            {todasSalas.map(([nome, s]) => {
-              const isProf = /professor|coordena/i.test(nome)
-              const alunos = Array.isArray(s?.alunos) ? [...s.alunos].sort((a, b) => (b.pts || 0) - (a.pts || 0)) : []
-              const totais = Array.isArray(s?.totais_por_aula) ? s.totais_por_aula : []
-              const datas = Array.isArray(s?.datas) ? s.datas : []
-              const maxVal = totais.length ? Math.max(...totais) : 0
+            {/* Gráfico de barras — Total de presentes por domingo */}
+            {(() => {
+              const refSala = todasSalas[0]?.[1]
+              const datas = Array.isArray(refSala?.datas) ? refSala.datas : []
+              if (!datas.length) return null
+              const chartData = datas.map((d, di) => ({
+                data: d,
+                total: todasSalas.reduce((s, [, sala]) => s + (Array.isArray(sala?.totais_por_aula) ? (sala.totais_por_aula[di] || 0) : 0), 0),
+              }))
               return (
-                <Card key={nome} className={`p-5 ${isProf ? 'border-slate-300' : ''}`}>
-                  {isProf && <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase mb-1">Corpo Docente</p>}
-                  <div className="mb-4">
-                    <p className={`text-[10px] font-semibold tracking-widest uppercase ${isProf ? 'text-slate-400' : 'text-gray-400'}`}>{nome}</p>
-                    <p className={`text-xl font-bold ${isProf ? 'text-slate-700' : 'text-gray-900'}`}>{Number(s?.freq_pct ?? 0).toFixed(2)}%</p>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr>
-                          <th className={`text-left py-1 pr-3 font-semibold uppercase min-w-32 ${isProf ? 'text-slate-400' : 'text-gray-400'}`}>
-                            {isProf ? 'Prof./Coord.' : 'Aluno'}
-                          </th>
-                          {datas.map(d => <th key={d} className="text-center px-1 py-1 text-gray-400 font-semibold">{d}</th>)}
-                          <th className="text-center px-1 py-1 text-gray-400 font-semibold uppercase">Pts</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {alunos.map(a => (
-                          <tr key={a.nome} className={`border-t ${isProf ? 'border-slate-50' : 'border-gray-50'}`}>
-                            <td className={`py-1.5 pr-3 uppercase font-medium ${isProf ? 'text-slate-600' : 'text-gray-700'}`}>{a.nome}</td>
-                            {Array.isArray(a.presencas) && a.presencas.map((p, i) => (
-                              <td key={i} className="text-center px-1 py-1.5">
-                                <span className={p ? (isProf ? 'text-slate-500 font-bold' : 'text-green-500 font-bold') : 'text-gray-200'}>{p ? '✓' : '–'}</span>
-                              </td>
-                            ))}
-                            <td className={`text-center px-1 py-1.5 font-bold ${isProf ? 'text-slate-600' : 'text-gray-800'}`}>{a.pts}</td>
-                          </tr>
-                        ))}
-                        <tr className="border-t-2 border-gray-200">
-                          <td className="py-1.5 pr-3 text-gray-400 font-semibold uppercase">Total</td>
-                          {totais.map((t, i) => (
-                            <td key={i} className={`text-center px-1 py-1.5 font-bold ${t === maxVal && maxVal > 0 ? (isProf ? 'text-slate-500' : 'text-amber-500') : 'text-gray-500'}`}>{t}</td>
-                          ))}
-                          <td />
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                <Card className="p-5">
+                  <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-4">Total de Presentes por Domingo</p>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={chartData} margin={{ top: 20, right: 10, left: -10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="data" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                      <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                      <Tooltip formatter={v => [`${v} presentes`, 'Total']} />
+                      <Bar dataKey="total" radius={[6, 6, 0, 0]} label={{ position: 'inside', fill: '#fff', fontSize: 12, fontWeight: 700 }}>
+                        {chartData.map((entry, i) => {
+                          const maxTotal = Math.max(...chartData.map(d => d.total))
+                          return <Cell key={i} fill={entry.total === maxTotal ? '#f59e0b' : '#7c6fcd'} />
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </Card>
               )
-            })}
+            })()}
           </div>
         )}
 
