@@ -27,7 +27,8 @@ export default function Dashboard() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchData,
-    refetchInterval: 10_000,
+    refetchInterval: 5_000,
+    refetchOnWindowFocus: true,
   })
 
   useEffect(() => {
