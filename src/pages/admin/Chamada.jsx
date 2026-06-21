@@ -24,7 +24,7 @@ function fmtDate(iso) {
   return `${d}/${m}/${y}`
 }
 
-export default function Chamada({ db, api, toast }) {
+export default function Chamada({ db, setDb, api, toast }) {
   const triAtivo = (db.trimestres || []).find(t => t.ativo) || db.trimestres?.[0]
   const [triId, setTriId] = useState(triAtivo?.id || '')
   const [salaId, setSalaId] = useState('')
@@ -84,6 +84,12 @@ export default function Chamada({ db, api, toast }) {
     try {
       const lote = alunos.map(a => ({ aluno_id: a.id, data, presente: presencas[a.id] || false }))
       await api('savePresencaLote', { presencas: lote })
+      // Atualiza db.presencas localmente para refletir o que foi salvo
+      setDb(prev => {
+        const alunoIds = new Set(lote.map(p => p.aluno_id))
+        const others = (prev.presencas || []).filter(p => !(alunoIds.has(p.aluno_id) && p.data === data))
+        return { ...prev, presencas: [...others, ...lote] }
+      })
       const total = lote.filter(p => p.presente).length
       toast({ message: `✓ Chamada salva! ${total} de ${alunos.length} presentes.` })
       try { new BroadcastChannel('ebd-updates').postMessage('refresh') } catch {}
