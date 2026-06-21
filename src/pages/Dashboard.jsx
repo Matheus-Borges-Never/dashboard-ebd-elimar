@@ -398,7 +398,7 @@ export default function Dashboard() {
               Líder de cada sala · Todos os empatados são exibidos
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {salasNaoProf.map(([nome, s]) => {
+              {todasSalas.map(([nome, s]) => {
                 const alunos = Array.isArray(s?.alunos) ? [...s.alunos].sort((a, b) => (b.pts || 0) - (a.pts || 0)) : []
                 const maxPts = alunos[0]?.pts ?? 0
                 const leaders = maxPts > 0 ? alunos.filter(a => a.pts === maxPts) : []
