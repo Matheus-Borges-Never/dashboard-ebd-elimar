@@ -67,22 +67,33 @@ export default function Dashboard() {
   const relatorio = Array.isArray(data.relatorio) ? data.relatorio : []
   const ranking = Array.isArray(data.ranking) ? data.ranking : []
 
-  // Salas: todas as chaves que não são meta/ranking/relatorio/__corpDocente
+  // Salas de alunos (sem professores)
   const salasNaoProf = Object.entries(data)
     .filter(([k, v]) => !EXCL.has(k) && typeof v === 'object' && v !== null && !Array.isArray(v) && !/professor|coordena/i.test(k))
 
+  // Corpo docente (sala de professores/coordenação)
+  const profEntry = Object.entries(data)
+    .find(([k, v]) => !EXCL.has(k) && typeof v === 'object' && v !== null && !Array.isArray(v) && /professor|coordena/i.test(k))
+  const profNome = profEntry?.[0] ?? null
+  const profSala = profEntry?.[1] ?? null
+
   const barData = [...relatorio].sort((a, b) => (b.freq_pct || 0) - (a.freq_pct || 0))
+  const barDataComProf = profSala
+    ? [...barData, { sala: profNome, freq_pct: Number(profSala.freq_pct ?? 0) }]
+    : barData
   const totalAlunos = relatorio.reduce((s, r) => s + (r.alunos_ref || 0), 0)
   const mediaFreq = barData.length ? barData.reduce((s, r) => s + (r.freq_pct || 0), 0) / barData.length : 0
   const pctProgress = meta.totalDomingos > 0 ? (meta.domingosPassed / meta.totalDomingos) * 100 : 0
 
+  const todasSalas = profEntry ? [...salasNaoProf, profEntry] : salasNaoProf
+
   const lineData = (() => {
-    if (!salasNaoProf.length) return []
-    const [, first] = salasNaoProf[0]
+    if (!todasSalas.length) return []
+    const [, first] = todasSalas[0]
     if (!Array.isArray(first?.datas)) return []
     return first.datas.map((dt, i) => {
       const point = { aula: dt }
-      salasNaoProf.forEach(([nome, s]) => {
+      todasSalas.forEach(([nome, s]) => {
         point[nome] = Array.isArray(s?.totais_por_aula) ? s.totais_por_aula[i] : 0
       })
       return point
@@ -163,13 +174,15 @@ export default function Dashboard() {
             <Card className="p-5">
               <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-4">Frequência por Sala (%)</p>
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={barData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                <BarChart data={barDataComProf} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="sala" tick={{ fontSize: 11, fill: '#9ca3af' }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#9ca3af' }} unit="%" />
                   <Tooltip formatter={v => `${Number(v).toFixed(1)}%`} />
                   <Bar dataKey="freq_pct" radius={[6, 6, 0, 0]}>
-                    {barData.map((_, i) => <Cell key={i} fill={SALA_COLORS[i % SALA_COLORS.length]} />)}
+                    {barDataComProf.map((entry, i) => (
+                      <Cell key={i} fill={/professor|coordena/i.test(entry.sala) ? '#64748b' : SALA_COLORS[i % SALA_COLORS.length]} />
+                    ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -179,32 +192,64 @@ export default function Dashboard() {
 
         {/* ── POR SALA ── */}
         {tab === 1 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {salasNaoProf.map(([nome, s]) => {
-              const alunos = Array.isArray(s?.alunos) ? [...s.alunos].sort((a, b) => (b.pts || 0) - (a.pts || 0)) : []
-              return (
-                <Card key={nome} className="p-5">
-                  <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase">{nome}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">{Number(s?.freq_pct ?? 0).toFixed(2)}%</p>
-                  <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-4">· {alunos.length} alunos</p>
-                  <div className="flex flex-col gap-0.5">
-                    {alunos.map(a => (
-                      <div key={a.nome} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
-                        <span className="text-sm text-gray-700 uppercase font-medium">{a.nome}</span>
-                        <div className="flex items-center gap-3">
-                          <div className="flex gap-0.5">
-                            {Array.isArray(a.presencas) && a.presencas.map((p, j) => (
-                              <div key={j} className={`w-2.5 h-2.5 rounded-full ${p ? 'bg-amber-400' : 'bg-gray-200'}`} />
-                            ))}
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {salasNaoProf.map(([nome, s]) => {
+                const alunos = Array.isArray(s?.alunos) ? [...s.alunos].sort((a, b) => (b.pts || 0) - (a.pts || 0)) : []
+                return (
+                  <Card key={nome} className="p-5">
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase">{nome}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{Number(s?.freq_pct ?? 0).toFixed(2)}%</p>
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-4">· {alunos.length} alunos</p>
+                    <div className="flex flex-col gap-0.5">
+                      {alunos.map(a => (
+                        <div key={a.nome} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                          <span className="text-sm text-gray-700 uppercase font-medium">{a.nome}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="flex gap-0.5">
+                              {Array.isArray(a.presencas) && a.presencas.map((p, j) => (
+                                <div key={j} className={`w-2.5 h-2.5 rounded-full ${p ? 'bg-amber-400' : 'bg-gray-200'}`} />
+                              ))}
+                            </div>
+                            <span className="text-xs font-bold text-gray-500 min-w-[40px] text-right">{a.pts} PTS</span>
                           </div>
-                          <span className="text-xs font-bold text-gray-500 min-w-[40px] text-right">{a.pts} PTS</span>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
+                      ))}
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+
+            {/* Corpo Docente */}
+            {profSala && (() => {
+              const alunos = Array.isArray(profSala?.alunos) ? [...profSala.alunos].sort((a, b) => (b.pts || 0) - (a.pts || 0)) : []
+              return (
+                <div>
+                  <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-3">Corpo Docente / Coordenação</p>
+                  <Card className="p-5 border-slate-300">
+                    <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">{profNome}</p>
+                    <p className="text-3xl font-bold text-slate-700 mt-1">{Number(profSala.freq_pct ?? 0).toFixed(2)}%</p>
+                    <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase mb-4">· {alunos.length} membros</p>
+                    <div className="flex flex-col gap-0.5">
+                      {alunos.map(a => (
+                        <div key={a.nome} className="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0">
+                          <span className="text-sm text-slate-600 uppercase font-medium">{a.nome}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="flex gap-0.5">
+                              {Array.isArray(a.presencas) && a.presencas.map((p, j) => (
+                                <div key={j} className={`w-2.5 h-2.5 rounded-full ${p ? 'bg-slate-500' : 'bg-gray-200'}`} />
+                              ))}
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 min-w-[40px] text-right">{a.pts} PTS</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </div>
               )
-            })}
+            })()}
           </div>
         )}
 
@@ -226,46 +271,53 @@ export default function Dashboard() {
                   {salasNaoProf.map(([nome], i) => (
                     <Line key={nome} type="monotone" dataKey={nome} stroke={SALA_COLORS[i % SALA_COLORS.length]} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                   ))}
+                  {profNome && (
+                    <Line type="monotone" dataKey={profNome} stroke="#64748b" strokeWidth={2} strokeDasharray="5 3" dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </Card>
 
-            {salasNaoProf.map(([nome, s]) => {
+            {todasSalas.map(([nome, s]) => {
+              const isProf = /professor|coordena/i.test(nome)
               const alunos = Array.isArray(s?.alunos) ? [...s.alunos].sort((a, b) => (b.pts || 0) - (a.pts || 0)) : []
               const totais = Array.isArray(s?.totais_por_aula) ? s.totais_por_aula : []
               const datas = Array.isArray(s?.datas) ? s.datas : []
               const maxVal = totais.length ? Math.max(...totais) : 0
               return (
-                <Card key={nome} className="p-5">
+                <Card key={nome} className={`p-5 ${isProf ? 'border-slate-300' : ''}`}>
+                  {isProf && <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase mb-1">Corpo Docente</p>}
                   <div className="mb-4">
-                    <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase">{nome}</p>
-                    <p className="text-xl font-bold text-gray-900">{Number(s?.freq_pct ?? 0).toFixed(2)}%</p>
+                    <p className={`text-[10px] font-semibold tracking-widest uppercase ${isProf ? 'text-slate-400' : 'text-gray-400'}`}>{nome}</p>
+                    <p className={`text-xl font-bold ${isProf ? 'text-slate-700' : 'text-gray-900'}`}>{Number(s?.freq_pct ?? 0).toFixed(2)}%</p>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
                         <tr>
-                          <th className="text-left py-1 pr-3 text-gray-400 font-semibold uppercase min-w-32">Aluno</th>
+                          <th className={`text-left py-1 pr-3 font-semibold uppercase min-w-32 ${isProf ? 'text-slate-400' : 'text-gray-400'}`}>
+                            {isProf ? 'Prof./Coord.' : 'Aluno'}
+                          </th>
                           {datas.map(d => <th key={d} className="text-center px-1 py-1 text-gray-400 font-semibold">{d}</th>)}
                           <th className="text-center px-1 py-1 text-gray-400 font-semibold uppercase">Pts</th>
                         </tr>
                       </thead>
                       <tbody>
                         {alunos.map(a => (
-                          <tr key={a.nome} className="border-t border-gray-50">
-                            <td className="py-1.5 pr-3 text-gray-700 uppercase font-medium">{a.nome}</td>
+                          <tr key={a.nome} className={`border-t ${isProf ? 'border-slate-50' : 'border-gray-50'}`}>
+                            <td className={`py-1.5 pr-3 uppercase font-medium ${isProf ? 'text-slate-600' : 'text-gray-700'}`}>{a.nome}</td>
                             {Array.isArray(a.presencas) && a.presencas.map((p, i) => (
                               <td key={i} className="text-center px-1 py-1.5">
-                                <span className={p ? 'text-green-500 font-bold' : 'text-gray-200'}>{p ? '✓' : '–'}</span>
+                                <span className={p ? (isProf ? 'text-slate-500 font-bold' : 'text-green-500 font-bold') : 'text-gray-200'}>{p ? '✓' : '–'}</span>
                               </td>
                             ))}
-                            <td className="text-center px-1 py-1.5 font-bold text-gray-800">{a.pts}</td>
+                            <td className={`text-center px-1 py-1.5 font-bold ${isProf ? 'text-slate-600' : 'text-gray-800'}`}>{a.pts}</td>
                           </tr>
                         ))}
                         <tr className="border-t-2 border-gray-200">
                           <td className="py-1.5 pr-3 text-gray-400 font-semibold uppercase">Total</td>
                           {totais.map((t, i) => (
-                            <td key={i} className={`text-center px-1 py-1.5 font-bold ${t === maxVal && maxVal > 0 ? 'text-amber-500' : 'text-gray-500'}`}>{t}</td>
+                            <td key={i} className={`text-center px-1 py-1.5 font-bold ${t === maxVal && maxVal > 0 ? (isProf ? 'text-slate-500' : 'text-amber-500') : 'text-gray-500'}`}>{t}</td>
                           ))}
                           <td />
                         </tr>
