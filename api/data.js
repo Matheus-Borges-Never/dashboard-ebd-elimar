@@ -69,7 +69,16 @@ function computeFromDB(db) {
     const ultimo_domingo = totais_por_aula[totais_por_aula.length - 1] ?? 0;
 
     if (!isProfessores) {
-      ranking.push({ sala: sala.nome, freq: freq_pct, alunos_ref: alunos.length, media_por_aula });
+      // Ranking: só entram alunos com mais de 23% de presença nas aulas realizadas
+      const alunosRanking = aulasRealizadas > 0
+        ? alunosData.filter(a => (a.pts / aulasRealizadas) > 0.23)
+        : [];
+      const totalRanking = alunosRanking.reduce((s, a) => s + a.pts, 0);
+      const maxRanking = alunosRanking.length * aulasRealizadas;
+      const freqRanking = maxRanking > 0 ? Math.round((totalRanking / maxRanking) * 10000) / 100 : 0;
+      const mediaRanking = parseFloat((alunosRanking.length * freqRanking / 100).toFixed(1));
+
+      ranking.push({ sala: sala.nome, freq: freqRanking, alunos_ref: alunosRanking.length, media_por_aula: mediaRanking });
       relatorio.push({ sala: sala.nome, alunos_ref: alunos.length, freq_pct, ultimo_domingo, media_por_aula });
     } else {
       result.__corpDocente = freq_pct;
